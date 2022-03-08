@@ -71,70 +71,27 @@ The prediction accuracy (denoted by $r_{MG}$) is the correlation between the tru
 
 ---
 
-# A real world example: Loblolly pine data
-
-Loblolly pine (Pinus taeda) data
->Resende Jr. et al. (2012) ([DOI: 10.1534/genetics.111.137026](http://dx.doi.org/10.1534/genetics.111.137026))
-
-
-- __Mating Design__: 70 full-sib familes and 951 individuals in total using _a circular mating design_
-- __Phenotyping__: 17 traits with distinct heritabilities and genetic architectures
-- __Genotyping__: with 4,853 SNPs using the SNP array method. 
-- Data can be downloaded from [zip](http://www.genetics.org/highwire/filestream/412827/field_highwire_adjunct_files/7/Loblolly_Pine_Resende_.zip) file. 
-
-In this example, we will use the breeding values of crown width across the planting beds at age 6 (CWAC6). 
-
-```{r, eval=FALSE}
-# read phenotype and SNP files
-pheno_file <- "https://jyanglab.com/img/data/DATA_nassau_age6_CWAC.csv"
-geno_file <- "https://jyanglab.com/img/data/Snp_Data.csv"
-
-pheno <- read.csv(pheno_file, header=TRUE, stringsAsFactors = FALSE)
-# hist(pheno$Derregressed_BV)
-geno <- read.csv(geno_file, header=TRUE, stringsAsFactors = FALSE)
-dim(geno)
-# geno[1:10, 1:10]
-```
-
+#Preprocessing geno data for only one time
 ```{r}
-#phenotype
-pheno = fread("data/geno_trait.txt")
 
-```
+library(data.table)
 
+geno = fread("largedata/hmp321_282_agpv4_maf005_miss03_pruned.vcf1",data.table = F)
+mk=colnames(geno)=geno[1,]
+geno=geno[-1,]
+geno=as.data.frame(geno,stringsAsFactors =F)
+geno = cbind(row.names(geno),geno) 
+colnames(geno)[1]="Genotype"
+geno$Genotype = as.character(geno$Genotype)
 
----
-# Loblolly pine data
+# chr to int by fwrite and fread
+fwrite(geno,"largedata/hmp321_282_agpv4_maf005_miss03_pruned_matrix.txt",sep="\t",col.names = T,row.names = F,quote=F)
+geno = fread("largedata/hmp321_282_agpv4_maf005_miss03_pruned_matrix.txt",data.table = F)
 
-### Remove missing phenotypes 
+genotype = geno[,1]
+geno <- geno[,-1]
 
-There are some accessions containing no phenotype. We need to remove these accessions first.
-
-```{r, eval=FALSE}
-na.index <-  which(is.na(pheno$Derregressed_BV))
-# length(na.index)
-pheno <- pheno[-na.index, ]
-# Keep genotypes for these remaining lines
-geno <- geno[geno$Genotype %in% pheno$Genotype, ]
-
-# phenotypes 
-y <- pheno$Derregressed_BV
-y <- matrix(y, ncol=1)
-
-# markers 
-geno <- geno[,-1] # 861 x 4853
-geno[geno == -9] <- NA
-```
-
-
----
 # SNP quality control
-
-In the `geno` matrix, row indicates individual, column indicates SNPs.
-
-### Missingness and MAF
-
-```{r, eval=FALSE, echo=TRUE}
 # missing rate
 missing <- apply(geno, 2, function(x){sum(is.na(x))/length(x)})
 # minor allele frequency
@@ -142,49 +99,76 @@ maf <- apply(geno, 2, function(x){
   frq <- mean(x, na.rm=TRUE)/2
   return(ifelse(frq > 0.5, 1-frq, frq))
 })
-```
 
---
-
-#### Plot the results
-```{r, eval=FALSE, echo=TRUE}
+pdf("/common/jyanglab/zhikaiyang/projects/GP_microbiome/largedata/missing.pdf", width=10, height=8)
 hist(missing, breaks=100, col="blue", xlab="SNP Missing rate")
+dev.off()
+
+pdf("/common/jyanglab/zhikaiyang/projects/GP_microbiome/largedata/maf.pdf", width=10, height=8)
 hist(maf, breaks=100, col="blue", xlab="Minor Allele Freq")
-```
+dev.off()
 
----
-# SNP quality control
 
-Removing SNPs with high missing rate (missingness > 0.2) and low MAF (MAF < 0.05)
-
-- Question: How many markers are removed?
-
-```{r, eval=FALSE, echo=TRUE}
-idx1 <- which(missing > 0.2) #154
-idx2 <- which(maf < 0.05) #1647
-idx <- unique(c(idx1, idx2)) #1784
+# further filter by maf and missing 
+idx1 <- which(missing > 0.2)
+idx2 <- which(maf < 0.05) 
+idx <- unique(c(idx1, idx2)) 
 
 geno2 <- geno[, -idx]
 dim(geno2)
+
+genotype = as.data.frame(genotype)
+genotype$genotype = as.character(genotype$genotype)
+geno3 = cbind(genotype, geno2)
+
+fwrite(geno3,"largedata/hmp321_282_agpv4_maf005_miss02_pruned_matrix.txt",sep="\t",col.names = T,row.names = F,quote=F)
+
 ```
 
+#Read in data
+```{r}
+library(data.table)
+pheno = fread("data/geno_trait.txt",data.table = F)
+geno = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_matrix.txt",data.table = F)
+```
 
---
+### Merge geno and pheno data
 
-### Missing marker imputation
+There are some accessions containing no phenotype. We need to remove these accessions first.
 
-Replace missing marker genotypes with __mean values__. Then store the marker genotypes in a matrix object `Z`. 
+```{r, eval=FALSE}
+itrait = 40
 
-```{r, eval=FALSE, echo=TRUE}
+na.index <-  which(is.na(pheno[,itrait]))
+# length(na.index)
+pheno_i <- pheno[-na.index,c(1,itrait)]
+
+length(which(geno$genotype %in% pheno_i$genotype))
+length(which(pheno_i$genotype %in% geno$genotype))
+
+# merge genotype and phenotype
+pheno_geno = merge(pheno_i, geno, by.x = "genotype", by.y ="genotype")
+dim(pheno_geno)   
+
+# phenotypes 
+y <- pheno_geno[,2]
+y <- matrix(y, ncol=1)
+
+# markers 
+geno2 <- pheno_geno[,-c(1,2)] # 861 x 4853
+
+
+
+# Missing marker imputation
 Z <- matrix(0, ncol=ncol(geno2), nrow=nrow(geno2))
 for (j in 1:ncol(geno2)){
   #cat("j = ", j, '\n')
   Z[,j] <- ifelse(is.na(geno2[,j]), mean(geno2[,j], na.rm=TRUE), geno2[,j])
 }
-# sum(is.na(Z))
+
 ```
 
----
+
 
 # Genomic relationship
 
