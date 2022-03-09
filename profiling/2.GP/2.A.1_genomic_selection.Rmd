@@ -139,6 +139,9 @@ There are some accessions containing no phenotype. We need to remove these acces
 ```{r, eval=FALSE}
 itrait = 40
 
+hist(pheno[,itrait], main = colnames(pheno)[itrait], xlab = colnames(pheno)[itrait], ylab = "Frequency")
+shapiro.test(pheno[,itrait])
+
 na.index <-  which(is.na(pheno[,itrait]))
 # length(na.index)
 pheno_i <- pheno[-na.index,c(1,itrait)]
@@ -166,6 +169,15 @@ for (j in 1:ncol(geno2)){
   Z[,j] <- ifelse(is.na(geno2[,j]), mean(geno2[,j], na.rm=TRUE), geno2[,j])
 }
 
+
+
+microbiomes = fread("data/blup_N_300_tax_groups.txt", data.table = F)
+library(ggplot2)
+library(GGally)
+set.seed(1234)
+ggpairs(microbiomes[,sample(152:ncol(microbiomes),6)],title = "Sampled sub-groups of microbiome")
+
+  
 ```
 
 
