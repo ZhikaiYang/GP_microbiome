@@ -175,7 +175,10 @@ microbiomes = fread("data/blup_N_300_tax_groups.txt", data.table = F)
 library(ggplot2)
 library(GGally)
 set.seed(1234)
-ggpairs(microbiomes[,sample(152:ncol(microbiomes),6)],title = "Sampled sub-groups of microbiome")
+
+pdf("largedata/micrbiome.pdf", width=10, height=8)
+ggpairs(microbiomes[,sort(sample(152:ncol(microbiomes),6))],title = "Sampled sub-groups of microbiome")
+dev.off()
 
   
 ```

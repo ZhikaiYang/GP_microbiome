@@ -54,4 +54,6 @@ p <-ggplot(p_K10, aes(x=method, y=accuracy, fill=method)) +
 
 p
 
+t.test(p_K10$accuracy[p_K10$method=="rrBLUP_less"], p_K10$accuracy[p_K10$method=="rrBLUP_less_geno_microbiome"])
+
 ```
