@@ -14,49 +14,83 @@ knitr::opts_knit$set(root.dir=normalizePath('../../'))
 ```{r}
 library(data.table)
 
-#DNA
+#microbiome
 
-a = fread("/common/jyanglab/zhikaiyang/projects/mediation/largedata/geno/gddtosilk_p7msnps_matrix_new.txt",header = T, data.table = F)
-geno = a[,c(1,3:ncol(a))]
-rm(a)
-pos = colnames(geno)[2:ncol(geno)]
-pos = data.frame(snp = pos)
-pos$chr = as.integer(gsub("-[0-9]+", "", pos$snp))
-pos$loc = as.integer(gsub("[0-9]+-", "", pos$snp))
+geno_name = fread("largedata/Zhikai/BG_genotype_names.csv",header = T, data.table = F)
 
-id_mads = which((pos$chr == 3) & (pos$loc >= 160591489) & (pos$loc <= 160591701)) #1
-id_mads = which((pos$chr == 3) & (pos$loc >= 150591489) & (pos$loc <= 170591701)) #8177
-id_mads = which((pos$chr == 3) & (pos$loc >= 150000000) & (pos$loc <= 180000000)) #12464
-id_mads_s = sort(sample(id_mads,10000))
-geno_mads = geno[,c(1,id_mads_s+1)]
+log_rel_abun_hn = fread("largedata/Zhikai/log_rel_abundance_3626asvs_HN.csv",header = T, data.table = F)
+log_rel_abun_ln = fread("largedata/Zhikai/log_rel_abundance_3626asvs_LN.csv",header = T, data.table = F)
 
-fwrite(geno_mads, "largedata/geno/mads69_10k_snps.txt", row.names = F, sep = "\t")
+rownames(log_rel_abun_hn) = log_rel_abun_hn$ASV
 
-#RNA
+log_rel_abun_hn$ASV = NULL
 
-male = fread("largedata/male_flowering_genes.txt")
-female = fread("largedata/female_flowering_genes.txt")
-flower_genes = unique(c(female$ID, male$ID))
-rnafile = "largedata/RNA-seq/filtered_LMAD.csv"
-rna <- fread(rnafile, data.table=FALSE)
-id_flower_g = which(colnames(rna) %in% flower_genes)
-rna_flower = rna[,c(1,id_flower_g)]
-fwrite(rna_flower, "largedata/rna_flower.txt", row.names = F, sep = "\t")
+log_rel_abun_hn_t <- as.data.frame(t(as.matrix(log_rel_abun_hn)))
+
+log_rel_abun_hn_t = cbind(rownames(log_rel_abun_hn_t), log_rel_abun_hn_t)
+colnames(log_rel_abun_hn_t)[1] = "Sample_ID"
+
+rownames(log_rel_abun_ln) = log_rel_abun_ln$ASV
+
+log_rel_abun_ln$ASV = NULL
+
+log_rel_abun_ln_t <- as.data.frame(t(as.matrix(log_rel_abun_ln)))
+
+log_rel_abun_ln_t = cbind(rownames(log_rel_abun_ln_t), log_rel_abun_ln_t)
+colnames(log_rel_abun_ln_t)[1] = "Sample_ID"
+
+log_rel_abun = rbind(log_rel_abun_hn_t, log_rel_abun_ln_t)
+
+log_rel_1 = log_rel_abun[,1:3]
+
+rm(log_rel_abun_hn)
+rm(log_rel_abun_hn_t)
+rm(log_rel_abun_ln)
+rm(log_rel_abun_ln_t)
+
+
+sinfo = fread("largedata/Zhikai/sample_data_3626asvs.csv", header = T, data.table = F)
+colnames(sinfo)[2] = "MM_name"
+
 
 ```
 
 #on local
 ```{r}
 library(data.table)
+library(dplyr)
+#genotype
+genos = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",data.table = F)
+
+geno = genos[,1:3]
+rm(genos)
+
+geno_names = merge(geno, geno_name, by.x = "genotype", by.y = "GX_name", all.x = T)
+
+mm_names = unique(geno_names$MM_name)
+mm_names2 = unique(sinfo$MM_name)
+
+mm_names2[which(!(mm_names2 %in% mm_names))]
+
+geno_names$MM_name =  ifelse(geno_names$MM_name == "", geno_names$BG_original, geno_names$MM_name)
+
+#sinfo_geno = merge(sinfo, geno_names, by.x = "MM_name", by.y = "MM_name")
+#sinfo_geno = sinfo_geno[,-c((ncol(sinfo_geno)-2):ncol(sinfo_geno))]
+
+
+sinfo_microbiome = merge(sinfo, log_rel_1, by.x = "Sample_ID", by.y = "Sample_ID")
+sinfo_microbiome_avg =  as.data.frame( sinfo_microbiome[,c(2:6,8:ncol(sinfo_microbiome))] %>% group_by(row,MM_name, nitrogen, block, sp, spb) %>% summarise_all(mean))
+
+sinfo_microbiome_geno = merge(sinfo_microbiome_avg, geno_names, by.x = "MM_name", by.y = "MM_name")
+sinfo_microbiome_geno = sinfo_microbiome_geno[,-c((ncol(sinfo_microbiome_geno)-2):ncol(sinfo_microbiome_geno))]
 
 #phenotype
-pheno = fread("data/geno_trait.txt")
+#vegetation index
+vis = fread("data/raw_phe.txt",header = T, data.table = F)
+vis = subset(vis, date == "12-Aug")
+cobw = fread("data/pheno2019_cob_weight.csv",header = T, data.table = F)
+kernelw = fread("data/pheno2019_20_kernel_weight.csv",header = T, data.table = F)
 
-#genotype
-geno_mads = fread("data/mads69_10k_snps.txt")
-
-#flowering time gene expression 
-rna_flower = fread("data/rna_flower.txt")
 
 #principal components
 pcs = fread("data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec")

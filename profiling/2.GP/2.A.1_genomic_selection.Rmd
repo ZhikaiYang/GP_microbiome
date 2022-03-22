@@ -123,6 +123,31 @@ geno3 = cbind(genotype, geno2)
 
 fwrite(geno3,"largedata/hmp321_282_agpv4_maf005_miss02_pruned_matrix.txt",sep="\t",col.names = T,row.names = F,quote=F)
 
+
+
+
+genos = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_matrix.txt",data.table = F)
+# markers 
+geno2 <- genos[,-c(1)] # 
+
+set.seed(1234)
+id = sort(sample(1:ncol(geno2),50000))
+geno2 = geno2[,id]
+
+# Missing marker imputation
+Z <- matrix(0, ncol=ncol(geno2), nrow=nrow(geno2))
+for (j in 1:ncol(geno2)){
+  #cat("j = ", j, '\n')
+  Z[,j] <- ifelse(is.na(geno2[,j]), mean(geno2[,j], na.rm=TRUE), geno2[,j])
+}
+
+colnames(Z) = colnames(geno2)
+Z = as.data.frame(Z)
+Z= cbind(genos$genotype, Z)
+colnames(Z)[1]= "genotype"
+Z$genotype = as.character(Z$genotype)
+fwrite(Z,"largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",sep="\t",col.names = T,row.names = F,quote=F)
+
 ```
 
 #Read in data
