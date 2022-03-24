@@ -83,7 +83,8 @@ sinfo_microbiome_avg =  as.data.frame( sinfo_microbiome[,c(2:6,8:ncol(sinfo_micr
 
 sinfo_microbiome_geno = merge(sinfo_microbiome_avg, geno_names, by.x = "MM_name", by.y = "MM_name")
 sinfo_microbiome_geno = sinfo_microbiome_geno[,-c((ncol(sinfo_microbiome_geno)-2):ncol(sinfo_microbiome_geno))]
-
+sinfo_microbiome_geno$MM_name = paste("c",ceiling(sinfo_microbiome_geno$row/2),sep = "_")
+colnames(sinfo_microbiome_geno)[1] = "ceil_id"
 #phenotype
 #vegetation index
 vis = fread("data/raw_phe.txt",header = T, data.table = F)
@@ -91,14 +92,241 @@ vis = subset(vis, date == "12-Aug")
 cobw = fread("data/pheno2019_cob_weight.csv",header = T, data.table = F)
 kernelw = fread("data/pheno2019_20_kernel_weight.csv",header = T, data.table = F)
 
+kernelw$ceil_id = paste("c",ceiling(kernelw$row/2),sep = "_")
+kernelw = kernelw[,c(ncol(kernelw), ncol(kernelw)-1)]
+
+sinfo_pheno_microbiome_geno = merge(kernelw, sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
+
 
 #principal components
 pcs = fread("data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec")
-pcs = pcs[,2:12]
-colnames(pcs) = c("genotype", paste0(rep("pc",10),1:10))
+pcs = pcs[,2:5]
+colnames(pcs) = c("genotype", paste0(rep("pc",3),1:3))
 
+sinfo_pheno_microbiome_geno_pc = merge(sinfo_pheno_microbiome_geno, pcs, by.x = "genotype", by.y = "genotype")
+id_na = which(is.na(sinfo_pheno_microbiome_geno_pc$Weight.of.20.seeds))
+sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
 
 ```
+
+```{r}
+y = matrix(sinfo_pheno_microbiome_geno_pc[,3],ncol = 1)
+
+
+#rrBLUP
+
+X = cbind(rep(1,nrow(y)), 
+          ifelse(sinfo_pheno_microbiome_geno_pc$nitrogen == "HN", 1, 0), 
+          ifelse(sinfo_pheno_microbiome_geno_pc$block == "N", 1, 0))
+
+id_1st_snp = which(colnames(sinfo_pheno_microbiome_geno_pc) == "1-25630")
+
+Z = as.matrix(sinfo_pheno_microbiome_geno_pc[,id_1st_snp:(id_1st_snp+1)])
+
+# SNP Matrix standardization
+  Zs <- scale(Z, center = TRUE, scale = TRUE)
+  # dimensions 
+  n <- nrow(Zs)
+  m <- ncol(Zs)
+  
+  
+  #Fit rrBLUP by using the mixed.solve function in the [rrBLUP]
+  fit2 <- mixed.solve(y = y, Z=Zs, X=X)
+  # marker additive genetic variance
+  fit2$Vu
+  # residual variance
+  fit2$Ve
+  # intercept 
+  fit2$beta
+  # marker additive genetic effects
+  head(fit2$u)
+  tail(fit2$u)
+  # ratio of variance components 
+  fit2$Ve / fit2$Vu
+  
+  # accuracy
+  y.hat2 <- X %*% matrix(fit2$beta)+ Zs %*% matrix(fit2$u)
+  cor.test(y, y.hat2)
+  
+    
+  # K-fold validation
+  K = 10
+  d = floor(n/K)
+  set.seed(1234)
+  i.mix = sample(1:n)
+  folds = vector(mode="list",length=K)
+  
+  for (k in 1:K) {
+    folds[[k]] = i.mix[((k-1)*d+1):(k*d)]
+  }
+  
+  p_K10_rr <- rep(0.0, 10)
+  
+  for (k in 1:K) {
+    cat("Fold",k,"\n")
+    
+    i.trn = unlist(folds[-k])
+    i.tst = folds[[k]]
+    
+    
+    y.trn = y[i.trn]    # training responses
+    
+    y.tst = y[i.tst]    # testing responses
+    
+    Zs.trn <- Zs[i.trn,]
+    Zs.tst <- Zs[i.tst,]
+    
+    X.trn <- X[i.trn,]
+    X.tst <- X[i.tst,]
+    
+    fit2.trn <- mixed.solve(y = y.trn, Z=Zs.trn, X=X.trn)
+    
+    
+    # prediction
+    y.hat2 <- X.tst %*% matrix(fit2.trn$beta) + Zs.tst %*% matrix(fit2.trn$u)
+    p_K10_rr[k] <- cor(y.hat2, y.tst)
+    
+  }
+  
+  
+  p_K10 <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],10)) , method = c(rep("rrBLUP", 10)),accuracy= c(p_K10_rr), fold = 1:10 , N = nrow(y))
+
+  
+#rrBLUP with microbiome and PCs
+X_microbiome = cbind(rep(1,nrow(y)), 
+          ifelse(sinfo_pheno_microbiome_geno_pc$nitrogen == "HN", 1, 0), 
+          ifelse(sinfo_pheno_microbiome_geno_pc$block == "N", 1, 0),
+          sinfo_pheno_microbiome_geno_pc$pc1,
+          sinfo_pheno_microbiome_geno_pc$pc2,
+          sinfo_pheno_microbiome_geno_pc$pc3)
+  
+id_1st_asv = which(colnames(sinfo_pheno_microbiome_geno_pc) == "asv_000048")
+
+Z_microbiome = as.matrix(sinfo_pheno_microbiome_geno_pc[,id_1st_asv:(id_1st_asv+1)])
+
+  #Fit rrBLUP with PCs and microbiome
+  fit2_microbiome <- mixed.solve(y = y, Z=Z_microbiome, X=X_microbiome)
+  # marker additive genetic variance
+  fit2_microbiome$Vu
+  # residual variance
+  fit2_microbiome$Ve
+  # intercept 
+  fit2_microbiome$beta
+  # marker additive genetic effects
+  head(fit2_microbiome$u)
+  tail(fit2_microbiome$u)
+  # ratio of variance components 
+  fit2_microbiome$Ve / fit2_microbiome$Vu
+  
+  # accuracy
+  y.hat2 <- X_microbiome %*% matrix(fit2_microbiome$beta) + Z_microbiome %*% matrix(fit2_microbiome$u)
+  cor.test(y.hat2, y)
+
+  
+  # K-fold validation
+  K = 10
+  d = floor(n/K)
+  set.seed(1234)
+  i.mix = sample(1:n)
+  folds = vector(mode="list",length=K)
+  
+  for (k in 1:K) {
+    folds[[k]] = i.mix[((k-1)*d+1):(k*d)]
+  }
+  
+  p_K10_rr_microbiome <- rep(0.0, 10)
+  
+  for (k in 1:K) {
+    cat("Fold",k,"\n")
+    
+    i.trn = unlist(folds[-k])
+    i.tst = folds[[k]]
+    
+    
+    y.trn = y[i.trn]    # training responses
+    
+    y.tst = y[i.tst]    # testing responses
+    
+    Z_microbiome.trn <- Z_microbiome[i.trn,]
+    Z_microbiome.tst <- Z_microbiome[i.tst,]
+    
+    X_microbiome.trn = X_microbiome[i.trn,]
+    X_microbiome.tst = X_microbiome[i.tst,]
+    
+    fit2_microbiome.trn <- mixed.solve(y = y.trn, Z=Z_microbiome.trn, X=X_microbiome.trn)
+    
+    
+    # prediction
+    y.hat2 <- X_microbiome.tst %*% matrix(fit2_microbiome.trn$beta) + Z_microbiome.tst %*% matrix(fit2_microbiome.trn$u)
+    p_K10_rr_microbiome[k] <- cor(y.hat2, y.tst)
+    
+  }
+  
+  p_K10_microbiome <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],10)) , method = c(rep("rrBLUP_PC_microbiome", 10)),accuracy= c(p_K10_rr_microbiome), fold = 1:10, N = nrow(y) )
+  
+  
+  
+  
+#Fit rrBLUP with Geno and Microbiome
+  X_geno_microbiome = cbind(rep(1,nrow(y)), 
+          ifelse(sinfo_pheno_microbiome_geno_pc$nitrogen == "HN", 1, 0), 
+          ifelse(sinfo_pheno_microbiome_geno_pc$block == "N", 1, 0))
+
+  Z_geno_microbiome = cbind(Zs,Z_microbiome)
+  K_geno_microbiome = diag(c(rep(fit2$Vu,ncol(Zs)),rep(fit2_microbiome$Vu,ncol(Z_microbiome))))
+  fit2_geno_microbiome <- mixed.solve(y = y, Z=Z_geno_microbiome, K=K_geno_microbiome, X=X_geno_microbiome)
+  
+  # accuracy
+  y.hat2 <- X_geno_microbiome %*% matrix(fit2_geno_microbiome$beta) + Z_geno_microbiome %*% matrix(fit2_geno_microbiome$u)
+  cor.test(y.hat2, y)
+  
+  # K-fold validation
+  K = 10
+  d = floor(n/K)
+  set.seed(1234)
+  i.mix = sample(1:n)
+  folds = vector(mode="list",length=K)
+  
+  for (k in 1:K) {
+    folds[[k]] = i.mix[((k-1)*d+1):(k*d)]
+  }
+  
+  p_K10_rr_geno_microbiome <- rep(0.0, 10)
+  
+  for (k in 1:K) {
+    cat("Fold",k,"\n")
+    
+    i.trn = unlist(folds[-k])
+    i.tst = folds[[k]]
+    
+    
+    y.trn = y[i.trn]    # training responses
+    
+    y.tst = y[i.tst]    # testing responses
+    
+    Z_geno_microbiome.trn <- Z_geno_microbiome[i.trn,]
+    Z_geno_microbiome.tst <- Z_geno_microbiome[i.tst,]
+    
+    X_geno_microbiome.trn <- X_geno_microbiome[i.trn,]
+    X_geno_microbiome.tst <- X_geno_microbiome[i.tst,]
+    
+    
+    fit2_geno_microbiome.trn <- mixed.solve(y = y.trn, Z=Z_geno_microbiome.trn, K=K_geno_microbiome, X = X_geno_microbiome.trn)
+    
+    
+    # prediction
+    y.hat2 <- X_geno_microbiome.tst %*% matrix(fit2_geno_microbiome.trn$beta) + Z_geno_microbiome.tst %*% matrix(fit2_geno_microbiome.trn$u)
+    p_K10_rr_geno_microbiome[k] <- cor(y.hat2, y.tst)
+    
+  }
+  
+  
+  p_K10_geno_microbiome <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],10)) , method = c(rep("rrBLUP_geno_microbiome", 10)),accuracy= c(p_K10_rr_geno_microbiome), fold = 1:10, N = nrow(y) )
+  
+  p_K10_all = rbind(p_K10, p_K10_microbiome, p_K10_geno_microbiome)
+
+```
+
 
 #pheno visualization
 ```{r}
