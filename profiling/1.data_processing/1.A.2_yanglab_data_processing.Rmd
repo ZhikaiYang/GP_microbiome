@@ -114,7 +114,7 @@ y = matrix(sinfo_pheno_microbiome_geno_pc[,3],ncol = 1)
 
 
 #rrBLUP
-
+library(rrBLUP)
 X = cbind(rep(1,nrow(y)), 
           ifelse(sinfo_pheno_microbiome_geno_pc$nitrogen == "HN", 1, 0), 
           ifelse(sinfo_pheno_microbiome_geno_pc$block == "N", 1, 0))

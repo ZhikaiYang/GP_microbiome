@@ -44,9 +44,6 @@ library(dplyr)
 #genotype
 geno = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",data.table = F)
 
-
-rm(genos)
-
 geno_names = merge(geno, geno_name, by.x = "genotype", by.y = "GX_name", all.x = T)
 
 mm_names = unique(geno_names$MM_name)
@@ -92,7 +89,7 @@ sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
 
 
 ##################################################################################
-
+library(rrBLUP)
 y = matrix(sinfo_pheno_microbiome_geno_pc[,3],ncol = 1)
 
 
@@ -308,5 +305,6 @@ p_K10_geno_microbiome <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbio
 
 p_K10_all = rbind(p_K10, p_K10_microbiome, p_K10_geno_microbiome)
 
+fwrite(p_K10_all, "largedata/prediction_accuracy_all_kernel_weight_jyang.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
