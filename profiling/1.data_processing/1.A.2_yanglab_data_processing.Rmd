@@ -30,6 +30,15 @@ log_rel_abun_hn_t <- as.data.frame(t(as.matrix(log_rel_abun_hn)))
 log_rel_abun_hn_t = cbind(rownames(log_rel_abun_hn_t), log_rel_abun_hn_t)
 colnames(log_rel_abun_hn_t)[1] = "Sample_ID"
 
+library(ggplot2)
+library(GGally)
+set.seed(1234)
+
+pdf("largedata/micrbiome_asvs.pdf", width=10, height=8)
+ggpairs(log_rel_abun_hn_t[,sort(sample(2:ncol(log_rel_abun_hn_t),6))],title = "Sampled ASVs")
+dev.off()
+
+
 rownames(log_rel_abun_ln) = log_rel_abun_ln$ASV
 
 log_rel_abun_ln$ASV = NULL
@@ -91,6 +100,7 @@ vis = fread("data/raw_phe.txt",header = T, data.table = F)
 vis = subset(vis, date == "12-Aug")
 cobw = fread("data/pheno2019_cob_weight.csv",header = T, data.table = F)
 kernelw = fread("data/pheno2019_20_kernel_weight.csv",header = T, data.table = F)
+hist(kernelw$Weight.of.20.seeds, xlab="20 kernels weight")
 
 kernelw$ceil_id = paste("c",ceiling(kernelw$row/2),sep = "_")
 kernelw = kernelw[,c(ncol(kernelw), ncol(kernelw)-1)]
