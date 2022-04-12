@@ -41,6 +41,7 @@ colnames(sinfo)[2] = "MM_name"
 #####################################################################
 
 library(dplyr)
+library(tidyr)
 #genotype
 geno = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",data.table = F)
 
