@@ -13,9 +13,6 @@
 
 `profiling/1.A.3_yanglab_data_sharing.Rmd`
 
-## Data Source
--Genome :
--Microbiome : https://www.biorxiv.org/content/10.1101/2021.11.01.466815v1.full
 
 # Project Guideline
 
