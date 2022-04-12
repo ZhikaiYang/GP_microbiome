@@ -68,6 +68,7 @@ colnames(sinfo)[2] = "MM_name"
 ```{r}
 library(data.table)
 library(dplyr)
+library(tidyr)
 #genotype
 genos = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",data.table = F)
 
@@ -97,7 +98,24 @@ colnames(sinfo_microbiome_geno)[1] = "ceil_id"
 #phenotype
 #vegetation index
 vis = fread("data/raw_phe.txt",header = T, data.table = F)
-vis = subset(vis, date == "12-Aug")
+#vis = subset(vis, date == "12-Aug")
+vis_canopy = vis[,1:10]
+table(vis_canopy$date)
+vis_canopy = spread(vis_canopy, key = "date", value = "Canopy_Coverage") 
+which(is.na(vis_canopy$`26-Aug`))
+vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_")
+vis_canopy = vis_canopy[,c(21, 20, 10:16, 18, 9, 17, 19)]
+
+pdf("largedata/canopy_dates.pdf", width=12, height=10)
+ggpairs(vis_canopy[,-1],title = "Canopy Coverage by date")
+dev.off()
+
+
+sinfo_pheno_microbiome_geno = merge(vis_canopy[,c(1,3)], sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
+
+####################
+
+
 cobw = fread("data/pheno2019_cob_weight.csv",header = T, data.table = F)
 kernelw = fread("data/pheno2019_20_kernel_weight.csv",header = T, data.table = F)
 hist(kernelw$Weight.of.20.seeds, xlab="20 kernels weight")
@@ -107,6 +125,7 @@ kernelw = kernelw[,c(ncol(kernelw), ncol(kernelw)-1)]
 
 sinfo_pheno_microbiome_geno = merge(kernelw, sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
 
+####################
 
 #principal components
 pcs = fread("data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec")
@@ -114,8 +133,12 @@ pcs = pcs[,2:5]
 colnames(pcs) = c("genotype", paste0(rep("pc",3),1:3))
 
 sinfo_pheno_microbiome_geno_pc = merge(sinfo_pheno_microbiome_geno, pcs, by.x = "genotype", by.y = "genotype")
-id_na = which(is.na(sinfo_pheno_microbiome_geno_pc$Weight.of.20.seeds))
-sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
+id_na = which(is.na(sinfo_pheno_microbiome_geno_pc$`12-Aug`))
+#id_na = which(is.na(sinfo_pheno_microbiome_geno_pc$Weight.of.20.seeds))
+if (length(id_na) != 0) {
+  sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
+}
+
 
 ```
 

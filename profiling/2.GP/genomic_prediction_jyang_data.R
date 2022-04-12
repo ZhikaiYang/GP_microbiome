@@ -67,14 +67,15 @@ colnames(sinfo_microbiome_geno)[1] = "ceil_id"
 #phenotype
 #vegetation index
 vis = fread("data/raw_phe.txt",header = T, data.table = F)
-vis = subset(vis, date == "12-Aug")
-cobw = fread("data/pheno2019_cob_weight.csv",header = T, data.table = F)
-kernelw = fread("data/pheno2019_20_kernel_weight.csv",header = T, data.table = F)
+#vis = subset(vis, date == "12-Aug")
+vis_canopy = vis[,1:10]
+table(vis_canopy$date)
+vis_canopy = spread(vis_canopy, key = "date", value = "Canopy_Coverage") 
 
-kernelw$ceil_id = paste("c",ceiling(kernelw$row/2),sep = "_")
-kernelw = kernelw[,c(ncol(kernelw), ncol(kernelw)-1)]
+vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_")
+vis_canopy = vis_canopy[,c(21, 20, 10:16, 18, 9, 17, 19)]
 
-sinfo_pheno_microbiome_geno = merge(kernelw, sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
+sinfo_pheno_microbiome_geno = merge(vis_canopy[,c(1,3)], sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
 
 
 #principal components
@@ -84,8 +85,9 @@ colnames(pcs) = c("genotype", paste0(rep("pc",3),1:3))
 
 sinfo_pheno_microbiome_geno_pc = merge(sinfo_pheno_microbiome_geno, pcs, by.x = "genotype", by.y = "genotype")
 id_na = which(is.na(sinfo_pheno_microbiome_geno_pc$Weight.of.20.seeds))
-sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
-
+if (length(id_na) != 0) {
+  sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
+}
 
 
 ##################################################################################
@@ -305,6 +307,6 @@ p_K10_geno_microbiome <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbio
 
 p_K10_all = rbind(p_K10, p_K10_microbiome, p_K10_geno_microbiome)
 
-fwrite(p_K10_all, "largedata/prediction_accuracy_all_kernel_weight_jyang.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(p_K10_all, "largedata/prediction_accuracy_all_canopy_12_jyang.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
