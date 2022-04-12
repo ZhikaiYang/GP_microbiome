@@ -3,15 +3,19 @@
 
 ## Data
 
-- Genome: `largedata/Zhikai/sinfo_micobiome_geno.txt`
-- Microbiome (in mature leaf during the day): `largedata/Zhikai/sinfo_micobiome_geno.txt`
-- Phenotype: `data/raw_phe.txt`
+- Genome (50k SNPs): `largedata/Zhikai/sinfo_micobiome_geno.txt`
+- Microbiome (3626 ASVs): `largedata/Zhikai/sinfo_micobiome_geno.txt` (for more information : Meier et al 2021 https://www.biorxiv.org/content/10.1101/2021.11.01.466815v1.full)
+- Phenotype (9 vegetation indexes): `data/raw_phe.txt`  (for more information : Rodene et al 2022 https://acsess.onlinelibrary.wiley.com/doi/full/10.1002/ppj2.20030)
 - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
 
 
 ## Data Processing and Sharing:
 
 `profiling/1.A.3_yanglab_data_sharing.Rmd`
+
+## Data Source
+-Genome :
+-Microbiome : https://www.biorxiv.org/content/10.1101/2021.11.01.466815v1.full
 
 # Project Guideline
 
