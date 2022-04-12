@@ -3,15 +3,15 @@
 
 ## Data
 
-- DNA: `data/mads69_10k_snps.txt`
-- RNA (in mature leaf during the day): `data/rna_flower.txt`
-- Phenotype: `data/geno_trait.txt`
+- Genome: `largedata/Zhikai/sinfo_micobiome_geno.txt`
+- Microbiome (in mature leaf during the day): `largedata/Zhikai/sinfo_micobiome_geno.txt`
+- Phenotype: `data/raw_phe.txt`
 - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
 
 
-## Data Processing:
+## Data Processing and Sharing:
 
-`profiling/1.data_processing/data_processing.Rmd`
+`profiling/1.A.3_yanglab_data_sharing.Rmd`
 
 # Project Guideline
 
