@@ -60,7 +60,7 @@ t.test(p_K10$accuracy[p_K10$method=="rrBLUP_less"], p_K10$accuracy[p_K10$method=
 ###Visualization for jyanglab data
 ```{r}
 
-p_K10 <- fread("largedata/prediction_accuracy_all_kernel_weight_jyang.txt", data.table = F)
+p_K10 <- fread("largedata/prediction_accuracy_all_canopy_12_aug_jyang.txt", data.table = F)
 
 
 dp <- ggplot(p_K10, aes(x=method, y=accuracy, fill=method)) + 

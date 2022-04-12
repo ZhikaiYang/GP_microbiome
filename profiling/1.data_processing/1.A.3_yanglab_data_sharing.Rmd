@@ -1,0 +1,83 @@
+---
+title: "data sharing"
+author: "Zhikai Yang"
+date: "April 8th, 2020"
+output: NULL
+---
+
+
+## Normalize the path:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+knitr::opts_knit$set(root.dir=normalizePath('../../')) 
+```
+
+#microbiome & genome
+```{r}
+library(data.table)
+library(dplyr)
+library(tidyr)
+
+sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header = T, data.table = F)
+
+# information from column 1 to 6, and column 3633
+
+# ceil_id : used for merging with corresponding phenotype
+# row : the row number of the observation for one genotype
+# nitroge : level of nitrogen fertilizer treatment
+# block : level of block factor
+# sp and spb :  split plot and split plot block, which are used to account for location variation, I didn't used the information in analysis
+# genotype (column 3633) : genotype name, used for merging with pcs
+
+
+
+# microbiome from column 7 to 3632
+
+# asv_###### : microbe id and its log(relative abundance (from 0  to 1) + 0.001 (a small pseudocount, so that log transformation works))
+
+
+
+# genome from 3634 to 53633
+
+# 1_25630 to 10_149467739 : snps id and their vaules (0-2)
+
+```
+
+#phenotype
+```{r}
+#vegetation index
+vis = fread("data/raw_phe.txt",header = T, data.table = F)
+
+# information from column 1 to 9
+
+# Row : the row number of the observation for one genotype
+# sb, spb, Rep, Row.Numbers, Genotype, Pedigree, Treatment : won't be used 
+# date: the date of data collected
+
+# vegetation indexes from column 10 to 18
+
+
+
+
+# spread the combined data for trait "canopy coverage" with measurements from date 6-July to 5-Sep
+vis_canopy = vis[,1:10]
+table(vis_canopy$date)
+vis_canopy = spread(vis_canopy, key = "date", value = "Canopy_Coverage") 
+
+# ceil_id : used for merging with corresponding phenotype
+vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_") 
+
+vis_canopy = vis_canopy[,c(21, 20, 10:16, 18, 9, 17, 19)]
+
+
+```
+
+#principal components
+```{r}
+pcs = fread("data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec")
+pcs = pcs[,2:5]
+colnames(pcs) = c("genotype", paste0(rep("pc",3),1:3)) # genotype name used for merging with genome data
+
+```
+
