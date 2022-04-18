@@ -76,7 +76,11 @@ colnames(sinfo_microbiome_geno)[1] = "ceil_id"
 
 library(rrBLUP)
 
-gp_genome_microbiome = function(sinfo_microbiome_geno = sinfo_microbiome_geno, id_vis = 10, id_date = 2){
+
+
+id_vis =10
+
+for (id_date in 5:13) {
   #phenotype
   #vegetation index
   vis = fread("data/raw_phe.txt",header = T, data.table = F)
@@ -105,7 +109,7 @@ gp_genome_microbiome = function(sinfo_microbiome_geno = sinfo_microbiome_geno, i
   
   
   ##################################################################################
- 
+  
   y = matrix(sinfo_pheno_microbiome_geno_pc[,which(colnames(sinfo_pheno_microbiome_geno_pc) == colnames(vis_canopy)[id_date])],ncol = 1)
   
   
@@ -324,11 +328,6 @@ gp_genome_microbiome = function(sinfo_microbiome_geno = sinfo_microbiome_geno, i
   outname = paste0("largedata/prediction_accuracy_trait_", colnames(vis)[id_vis], "_date_",colnames(vis_canopy)[id_date],"_jyang.txt")
   fwrite(p_K10_all, outname, sep = "\t", quote = F, row.names = F, col.names = T)
   
-}
-
-
-for (id_date in 5:13) {
-  gp_genome_microbiome(sinfo_microbiome_geno = sinfo_microbiome_geno, id_vis = 10, id_date = id_date )
 }
 
 
