@@ -80,7 +80,7 @@ library(rrBLUP)
 
 id_vis =10
 
-for (id_date in 5:13) {
+for (id_date in 10:13) {
   #phenotype
   #vegetation index
   vis = fread("data/raw_phe.txt",header = T, data.table = F)
