@@ -153,6 +153,20 @@ colnames(sinfo)[2] = "MM_name"
 
 ```
 
+#double check michael's geno names from two sources
+```{r}
+mm_names = geno_name$MM_name
+mm_names = geno_name$MM_name[-which(geno_name$MM_name == "")]
+mm_names2 = unique(sinfo$MM_name)
+mm_names2[which(!(mm_names2 %in% mm_names))]
+#"CHECK2" "CML228"solved "CHECK"  "NC350"solved  "RTH3"  
+gx_name = geno_name$GX_name[-which(geno_name$MM_name == "")]
+length(which(gx_name == ""))
+gx_name[which(!(gx_name %in% geno$genotype))]
+#"B73Htrhm" "CM174"  "F44"  "N7A" 
+```
+
+
 #on local
 ```{r}
 library(data.table)
