@@ -167,7 +167,7 @@ gx_name[which(!(gx_name %in% geno$genotype))]
 ```
 
 
-#on local
+#on HCC
 ```{r}
 library(data.table)
 library(dplyr)
@@ -175,10 +175,10 @@ library(tidyr)
 #genotype
 genos = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",data.table = F)
 
-geno = genos[,1:3]
-rm(genos)
+#geno = genos[,1:3]
+#rm(genos)
 
-geno_names = merge(geno, geno_name, by.x = "genotype", by.y = "GX_name", all.x = T)
+geno_names = merge(genos, geno_name, by.x = "genotype", by.y = "GX_name", all.x = T)
 
 mm_names = unique(geno_names$MM_name)
 mm_names2 = unique(sinfo$MM_name)
@@ -190,14 +190,29 @@ geno_names$MM_name =  ifelse(geno_names$MM_name == "", geno_names$BG_original, g
 #sinfo_geno = merge(sinfo, geno_names, by.x = "MM_name", by.y = "MM_name")
 #sinfo_geno = sinfo_geno[,-c((ncol(sinfo_geno)-2):ncol(sinfo_geno))]
 
-
-sinfo_microbiome = merge(sinfo, log_rel_1, by.x = "Sample_ID", by.y = "Sample_ID")
+#log relative abundance
+sinfo_microbiome = merge(sinfo, log_rel_abun, by.x = "Sample_ID", by.y = "Sample_ID")
 sinfo_microbiome_avg =  as.data.frame( sinfo_microbiome[,c(2:6,8:ncol(sinfo_microbiome))] %>% group_by(row,MM_name, nitrogen, block, sp, spb) %>% summarise_all(mean))
 
 sinfo_microbiome_geno = merge(sinfo_microbiome_avg, geno_names, by.x = "MM_name", by.y = "MM_name")
 sinfo_microbiome_geno = sinfo_microbiome_geno[,-c((ncol(sinfo_microbiome_geno)-2):ncol(sinfo_microbiome_geno))]
 sinfo_microbiome_geno$MM_name = paste("c",ceiling(sinfo_microbiome_geno$row/2),sep = "_")
 colnames(sinfo_microbiome_geno)[1] = "ceil_id"
+
+
+#counts (on HCC)
+sinfo_microbiome_count = merge(sinfo, counts, by.x = "Sample_ID", by.y = "Sample_ID")
+sinfo_microbiome_avg_count =  as.data.frame( sinfo_microbiome_count[,c(2:6,8:ncol(sinfo_microbiome_count))] %>% group_by(row,MM_name, nitrogen, block, sp, spb) %>% summarise_all(mean))
+
+sinfo_microbiome_geno_count = merge(sinfo_microbiome_avg_count, geno_names, by.x = "MM_name", by.y = "MM_name")
+sinfo_microbiome_geno_count = sinfo_microbiome_geno_count[,-c((ncol(sinfo_microbiome_geno_count)-2):ncol(sinfo_microbiome_geno_count))]
+sinfo_microbiome_geno_count$MM_name = paste("c",ceiling(sinfo_microbiome_geno_count$row/2),sep = "_")
+colnames(sinfo_microbiome_geno_count)[1] = "ceil_id"
+fwrite(sinfo_microbiome_geno_count, "largedata/Zhikai/sinfo_microbiome_geno_count.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+sinfo$ceil_id = paste("c",ceiling(sinfo$row/2),sep = "_")
+fwrite(sinfo, "data/sample_info_3626asvs.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
 #phenotype
 #vegetation index
 vis = fread("data/raw_phe.txt",header = T, data.table = F)

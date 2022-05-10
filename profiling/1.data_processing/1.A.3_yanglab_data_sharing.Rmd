@@ -21,6 +21,8 @@ library(tidyr)
 
 sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header = T, data.table = F)
 
+sinfo_microbiome_geno_count = fread("largedata/Zhikai/sinfo_microbiome_geno_count.txt",header = T, data.table = F)
+
 # information from column 1 to 6, and column 3633
 
 # ceil_id : used for merging with corresponding phenotype
