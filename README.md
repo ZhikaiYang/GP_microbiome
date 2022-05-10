@@ -7,7 +7,7 @@
 - Microbiome (3626 ASVs): log relative abundance (`largedata/Zhikai/sinfo_micobiome_geno.txt`), count (`largedata/Zhikai/sinfo_micobiome_geno_count.txt`) (for more information : Meier et al 2021 https://www.biorxiv.org/content/10.1101/2021.11.01.466815v1.full)
 - Phenotype (9 vegetation indexes): `data/raw_phe.txt`  (for more information : Rodene et al 2022 https://acsess.onlinelibrary.wiley.com/doi/full/10.1002/ppj2.20030)
 - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
-- Genotype names lookup table: `data/BG_genotype_names.csv`
+- Genotype names lookup table: `data/BG_genotype_names.csv` (not needed, because the data files I provide just use the same genotype name, i.e. GX_name in the table)
 - Sample info: `data/sample_info_3626asvs.txt` (for information about N treatment level of each ceil_id corresponding to two rows with the same genotype)
 
 ## Data Processing and Sharing:
