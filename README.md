@@ -6,13 +6,13 @@
 #### Genotype ID
 - Genotype names lookup table: `data/BG_genotype_names.csv` 
  - (not needed, because the data files I provide just use the same genotype name, i.e. `GX_name` in the table)
- - TODO: need a master file
+ - TODO: need a master file (n_MM_name = 232, n_GX_name = 277, n_overlap_with_SNP_file_geno_name = 212)
  
  - Population structure
   - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
 
 #### Genome-sequencing data
-- Whole genome sequencing data (n=?)
+- Whole genome sequencing data (n=271)
 - SNP data (20 million): ``
 - SNP data (50k SNPs): `largedata/Zhikai/sinfo_micobiome_geno.txt`
 
