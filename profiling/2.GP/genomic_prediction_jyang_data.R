@@ -78,9 +78,9 @@ library(rrBLUP)
 
 
 
-id_vis =10
+id_vis =11
 
-for (id_date in 10:13) {
+for (id_date in 4:6) {
   #phenotype
   #vegetation index
   vis = fread("data/raw_phe.txt",header = T, data.table = F)
@@ -273,7 +273,20 @@ for (id_date in 10:13) {
                             ifelse(sinfo_pheno_microbiome_geno_pc$block == "N", 1, 0))
   
   Z_geno_microbiome = cbind(Zs,Z_microbiome)
+  
+  
   K_geno_microbiome = diag(c(rep(fit2$Vu,ncol(Zs)),rep(fit2_microbiome$Vu,ncol(Z_microbiome))))
+  
+  rm(geno_names)
+  rm(geno)
+  rm(sinfo_microbiome)
+  rm(sinfo_microbiome_avg)
+  rm(sinfo_pheno_microbiome_geno)
+  rm(X)
+  rm(X_microbiome)
+  rm(Z_microbiome)
+  rm(Z)
+  
   fit2_geno_microbiome <- mixed.solve(y = y, Z=Z_geno_microbiome, K=K_geno_microbiome, X=X_geno_microbiome)
   
   # accuracy
@@ -327,7 +340,7 @@ for (id_date in 10:13) {
   
   outname = paste0("largedata/prediction_accuracy_trait_", colnames(vis)[id_vis], "_date_",colnames(vis_canopy)[id_date],"_jyang.txt")
   fwrite(p_K10_all, outname, sep = "\t", quote = F, row.names = F, col.names = T)
-  
+  rm(sinfo_pheno_microbiome_geno_pc)
 }
 
 
