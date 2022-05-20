@@ -216,6 +216,12 @@ fwrite(sinfo, "data/sample_info_3626asvs.txt", sep = "\t", quote = F, row.names 
 #phenotype
 #vegetation index
 vis = fread("data/raw_phe.txt",header = T, data.table = F)
+
+pdf("largedata/vis_cor.pdf", width=15, height=12)
+ggpairs(vis[,10:18],title = "Vegetation Indexes Distribution")
+dev.off()
+
+
 #vis = subset(vis, date == "12-Aug")
 vis_canopy = vis[,1:10]
 table(vis_canopy$date)

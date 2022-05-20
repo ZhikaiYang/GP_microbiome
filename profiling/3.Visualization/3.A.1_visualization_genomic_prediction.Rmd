@@ -138,3 +138,44 @@ dev.off()
 
 ```
 
+#all vegetation indexes visualization
+```{r}
+pred_all_vis_dates = fread("largedata/pred_all_vis_dates.txt", data.table = F)
+pred_all_vis_dates$date <- factor(pred_all_vis_dates$date, levels = c( "6-Jul", "12-Aug", "14-Aug", "16-Aug", "20-Aug", "22-Aug", "23-Aug", "26-Aug", "30-Aug", "1-Sep", "3-Sep", "5-Sep"),
+                    labels =c( "6-Jul", "12-Aug", "14-Aug", "16-Aug", "20-Aug", "22-Aug", "23-Aug", "26-Aug", "30-Aug", "1-Sep", "3-Sep", "5-Sep"))
+
+id_pc = which(pred_all_vis_dates$method == "rrBLUP_PC_microbiome")
+pred_all_vis_dates = pred_all_vis_dates[-id_pc,]
+
+vis = as.character(data.frame(table(pred_all_vis_dates$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggboxplot(pred_all_vis_dates[which(pred_all_vis_dates$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") + 
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(-0.01, 1)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "top", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+
+```
+
