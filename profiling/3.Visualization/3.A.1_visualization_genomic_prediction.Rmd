@@ -94,49 +94,6 @@ t.test(p_K10$accuracy[p_K10$method=="rrBLUP"], p_K10$accuracy[p_K10$method=="rrB
 
 ```
 
-```{r}
-f <- list.files(path="largedata", pattern="prediction_accuracy_trait", full.names = T)
-
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*_date_|_jyang.*", "", out$file)
-out$date <- factor(out$date, levels = c( "6-Jul", "12-Aug", "14-Aug", "16-Aug", "20-Aug", "22-Aug", "23-Aug", "26-Aug", "30-Aug", "1-Sep", "3-Sep", "5-Sep"),
-                    labels =c( "6-Jul", "12-Aug", "14-Aug", "16-Aug", "20-Aug", "22-Aug", "23-Aug", "26-Aug", "30-Aug", "1-Sep", "3-Sep", "5-Sep"))
-
-id_pc = which(out$method == "rrBLUP_PC_microbiome")
-out = out[-id_pc,]
-
-fsize = 18
-p <- ggboxplot(out, x = "date", y = "accuracy",
-          color = "method", palette = "jco",
-          add = "jitter")
-p_date = p + stat_compare_means(aes(group = method), label = "p.signif")+
-  xlab("Date") +
-    ylab("Prediction Accuracy ") +
-    ggtitle("") +
-    theme_classic() +
-    labs(fill = "") +
-    scale_y_continuous(limits = c(-0.01, 1)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 15, hjust=0.8),
-          legend.position = "top", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-pdf("graphs/prediction_accuracy_canopy_coverage_by_dates.pdf", width = 9, height= 6)
-p_date
-dev.off()
-
-```
 
 #all vegetation indexes visualization
 ```{r}
@@ -177,5 +134,60 @@ figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plis
 figure
 
 
+```
+#on HCC
+```{r}
+f <- list.files(path="largedata", pattern="prediction_accuracy_seed", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/pred_canopy_dates_seeds.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+#on local
+
+```{r}
+pred_canopy = fread("largedata/pred_canopy_dates_seeds.txt", data.table = F)
+
+pred_canopy_avg =  as.data.frame( pred_canopy %>% group_by(trait, date, method, seed) %>% summarise_all(mean))
+
+
+pred_canopy_avg$date <- factor(pred_canopy_avg$date, levels = c( "July6", "Aug12", "Sept5"), labels =c( "Jul-6", "Aug-12", "Sep-5"))
+
+
+fsize = 18
+p <- ggboxplot(pred_canopy_avg, x = "date", y = "accuracy",
+          color = "method", palette = "jco",
+          add = "jitter")
+p_date = p + stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+  xlab("Date") +
+    ylab("Prediction Accuracy ") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(-0.01, 1)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 15, hjust=0.8),
+          legend.position = "top", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+pdf("graphs/prediction_accuracy_canopy_coverage_by_dates.pdf", width = 9, height= 6)
+p_date
+dev.off()
 ```
 
