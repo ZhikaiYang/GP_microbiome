@@ -24,7 +24,7 @@
 
 
 #### Phenomics data
-- UAV Phenotype (9 vegetation indices): `data/raw_phe.txt`  
+- UAV Phenotype (9 vegetation indices): Canopy Coverage (`data/ppj220030-sup-0002-tables1.csv`), Vegetation Indices (`data/ppj220030-sup-0003-tables2.csv`) 
   - (for more information: [Rodene et. al., 2022](https://acsess.onlinelibrary.wiley.com/doi/full/10.1002/ppj2.20030)
 
 
