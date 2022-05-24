@@ -160,6 +160,7 @@ fwrite(out[,-7], "largedata/pred_canopy_dates_seeds.txt", sep = "\t", quote = F,
 ```{r}
 pred_canopy = fread("largedata/pred_canopy_dates_seeds.txt", data.table = F)
 
+library(dplyr)
 pred_canopy_avg =  as.data.frame( pred_canopy %>% group_by(trait, date, method, seed) %>% summarise_all(mean))
 
 
@@ -189,5 +190,50 @@ p_date = p + stat_compare_means(aes(group = method), label = "p.signif", paired 
 pdf("graphs/prediction_accuracy_canopy_coverage_by_dates.pdf", width = 9, height= 6)
 p_date
 dev.off()
+```
+
+
+#all vegetation indexes visualization
+```{r}
+pred_vis = fread("largedata/pred_vis_dates_seeds.txt", data.table = F)
+pred_all = rbind(pred_canopy,pred_vis) 
+
+pred_all_avg =  as.data.frame( pred_all %>% group_by(trait, date, method, seed) %>% summarise_all(mean))
+
+
+pred_all_avg$date <- factor(pred_all_avg$date, levels = c( "July6", "Aug12", "Sept5"), labels =c( "Jul-6", "Aug-12", "Sep-5"))
+
+
+vis = as.character(data.frame(table(pred_all_avg$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(-0.01, 1)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "top", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+
 ```
 
