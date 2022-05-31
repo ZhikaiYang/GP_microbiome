@@ -284,7 +284,7 @@ for (i in 1:9) {
     ggtitle(vis[i]) +
     theme_classic() +
     labs(fill = "") +
-    scale_y_continuous(limits = c(0.4, 0.9)) +
+    #scale_y_continuous(limits = c(0.4, 0.9)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
@@ -305,3 +305,66 @@ figure
 
 ```
 
+#separate HN and LN, on HCC
+```{r}
+f <- list.files(path="largedata/outputs", pattern="_nitrogen_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$nitrogen = gsub(".*nitrogen_|_jyang.*", "", out$file)
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/pred_seeds_dates_nitrogen_canopy_vis.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+
+#separate HN and LN, all vegetation indexes visualization 
+```{r}
+pred_all_nitrogen = fread("largedata/pred_seeds_dates_nitrogen_canopy_vis.txt", data.table = F)
+
+pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, date, method, seed, nitrogen) %>% summarise_all(mean))
+
+pred_all_nitrogen_avg$date <- factor(pred_all_nitrogen_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "HN", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+
+```
