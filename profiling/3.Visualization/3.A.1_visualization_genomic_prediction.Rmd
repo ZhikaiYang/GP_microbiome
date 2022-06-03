@@ -398,6 +398,12 @@ pred_all_shuffled = fread("largedata/pred_seeds_dates_shuffled_canopy_vis.txt", 
 
 pred_all_shuffled_avg =  as.data.frame( pred_all_shuffled %>% group_by(trait, date, method, seed, shuffled) %>% summarise_all(mean))
 
+pred_all_shuffled_avg$method[which(pred_all_shuffled_avg$method == "rrBLUP_geno_microbiome")] = "rrBLUP_geno_shuffled_microbiome"
+
+pred_all_compare = rbind(pred_all_shuffled_avg[,-5], pred_all_avg)
+
+pred_all_compare = pred_all_compare[-(which(pred_all_compare$method=="rrBLUP")),]
+
 pred_all_shuffled_avg$date <- factor(pred_all_shuffled_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
 
 
@@ -420,6 +426,41 @@ for (i in 1:9) {
           axis.title=element_text(size=fsize, face="bold"),
           axis.text.x = element_text(angle = 25, hjust=0.8),
           legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+
+
+pred_all_compare$date <- factor(pred_all_compare$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(pred_all_compare$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggboxplot(pred_all_compare[which(pred_all_compare$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "top", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
