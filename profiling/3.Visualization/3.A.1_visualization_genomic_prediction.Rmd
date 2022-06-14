@@ -404,6 +404,46 @@ pred_all_compare = rbind(pred_all_shuffled_avg[,-5], pred_all_avg)
 
 pred_all_compare = pred_all_compare[-(which(pred_all_compare$method=="rrBLUP")),]
 
+
+
+
+##calculate improvement ratio
+
+pred_all_compare_mean = as.data.frame( pred_all_compare %>% group_by(trait, date, method) %>% summarise_all(mean))
+
+pred_all_compare_mean_d = pred_all_compare_mean[seq(1,53,by=2),c(1,2,5)]
+rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
+
+for (i in seq(1,53,by=2)) {
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i]-pred_all_compare_mean$accuracy[i+1])/pred_all_compare_mean$accuracy[i+1]
+}
+
+pred_all_compare_mean_d$date <- factor(pred_all_compare_mean_d$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+#colnames(pred_all_compare_mean_d)[3] = "accuracy_increase_percentage"
+
+ggplot(data=pred_all_compare_mean_d, aes(x=trait, y=accuracy, fill=date)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Paired")+
+    xlab("") +
+    ylab("Accuracy Improvement") +
+    ggtitle("Prediction Accuracy Improvement Percentage ") +
+    theme_classic() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+##############################
+
+
 pred_all_shuffled_avg$date <- factor(pred_all_shuffled_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
 
 
