@@ -1,114 +1,87 @@
 setwd('/common/jyanglab/zhikaiyang/projects/GP_microbiome')
 
-#options(echo=TRUE) # if you want see commands in output file
-#args <- commandArgs(trailingOnly = TRUE)
+options(echo=TRUE) # if you want see commands in output file
+args <- commandArgs(trailingOnly = TRUE)
 
-#id_vis <- as.numeric(as.character(args[1]))
-#id_date <- as.numeric(as.character(args[2]))
+id_seed <- as.numeric(as.character(args[1]))
+id_date <- as.numeric(as.character(args[2]))
+id_trait <- as.numeric(as.character(args[3]))
 
+print(id_seed)
+print(id_date)
+print(id_trait)
 
 library(data.table)
-#microbiome
+library(dplyr)
+library(tidyr)
+library(rrBLUP)
 
-geno_name = fread("largedata/Zhikai/BG_genotype_names.csv",header = T, data.table = F)
-
-log_rel_abun_hn = fread("largedata/Zhikai/log_rel_abundance_3626asvs_HN.csv",header = T, data.table = F)
-log_rel_abun_ln = fread("largedata/Zhikai/log_rel_abundance_3626asvs_LN.csv",header = T, data.table = F)
-
-rownames(log_rel_abun_hn) = log_rel_abun_hn$ASV
-
-log_rel_abun_hn$ASV = NULL
-
-log_rel_abun_hn_t <- as.data.frame(t(as.matrix(log_rel_abun_hn)))
-
-log_rel_abun_hn_t = cbind(rownames(log_rel_abun_hn_t), log_rel_abun_hn_t)
-colnames(log_rel_abun_hn_t)[1] = "Sample_ID"
-
-rownames(log_rel_abun_ln) = log_rel_abun_ln$ASV
-
-log_rel_abun_ln$ASV = NULL
-
-log_rel_abun_ln_t <- as.data.frame(t(as.matrix(log_rel_abun_ln)))
-
-log_rel_abun_ln_t = cbind(rownames(log_rel_abun_ln_t), log_rel_abun_ln_t)
-colnames(log_rel_abun_ln_t)[1] = "Sample_ID"
-
-log_rel_abun = rbind(log_rel_abun_hn_t, log_rel_abun_ln_t)
+sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header = T, data.table = F)
 
 
-rm(log_rel_abun_hn)
-rm(log_rel_abun_hn_t)
-rm(log_rel_abun_ln)
-rm(log_rel_abun_ln_t)
+# information from column 1 to 6, and column 3633
+
+# ceil_id : used for merging with corresponding phenotype
+# row : the row number of the observation for one genotype
+# nitroge : level of nitrogen fertilizer treatment
+# block : level of block factor
+# sp and spb :  split plot and split plot block, which are used to account for location variation, I didn't used the information in analysis
+# genotype (column 3633) : genotype name, used for merging with pcs
 
 
-sinfo = fread("largedata/Zhikai/sample_data_3626asvs.csv", header = T, data.table = F)
-colnames(sinfo)[2] = "MM_name"
+
+# microbiome from column 7 to 3632
+
+# asv_###### : microbe id and its log(relative abundance (from 0  to 1) + 0.001 (a small pseudocount, so that log transformation works))
+
+
+
+# genome from 3634 to 53633
+
+# 1_25630 to 10_149467739 : snps id and their vaules (0-2)
+
+
+
+#phenotype
+#vegetation index
+vis = fread("data/ppj220030-sup-0003-tables2.csv",header = T, data.table = F)
+# information from column 1 to 9
+
+# Row : the row number of the observation for one genotype
+# sb, spb, Rep, Row.Numbers, Genotype, Pedigree, Treatment : won't be used 
+# date: the date of data collected
+
+# vegetation indexes from column 10 to 18
+
+
+
+# spread the combined data for trait "canopy coverage" with measurements from date 6-July to 5-Sep
+vis_canopy = vis[,c(1:6,id_trait)]
+table(vis_canopy$date)
+vis_canopy = spread(vis_canopy, key = "date", value = colnames(vis)[id_trait]) 
+
+# ceil_id : used for merging with corresponding phenotype
+vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_")
+vis_canopy = vis_canopy[,c(18, 14, 6:13, 15:17)]
+vis_canopy = vis_canopy[,c(1,3,7,13)]
+sinfo_pheno_microbiome_geno = merge(vis_canopy[,c(1,id_date)], sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
+
+
+#principal components
+pcs = fread("data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec")
+pcs = pcs[,2:5]
+colnames(pcs) = c("genotype", paste0(rep("pc",3),1:3))
+
+sinfo_pheno_microbiome_geno_pc = merge(sinfo_pheno_microbiome_geno, pcs, by.x = "genotype", by.y = "genotype")
+
+id_na = which(is.na(sinfo_pheno_microbiome_geno_pc[, which(colnames(sinfo_pheno_microbiome_geno_pc) == colnames(vis_canopy)[id_date])]))
+if (length(id_na) != 0) {
+  sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
+}
 
 
 #####################################################################
 
-library(dplyr)
-library(tidyr)
-#genotype
-geno = fread("largedata/hmp321_282_agpv4_maf005_miss02_pruned_s50k_imputed_matrix.txt",data.table = F)
-
-geno_names = merge(geno, geno_name, by.x = "genotype", by.y = "GX_name", all.x = T)
-
-mm_names = unique(geno_names$MM_name)
-mm_names2 = unique(sinfo$MM_name)
-
-mm_names2[which(!(mm_names2 %in% mm_names))]
-
-geno_names$MM_name =  ifelse(geno_names$MM_name == "", geno_names$BG_original, geno_names$MM_name)
-
-#sinfo_geno = merge(sinfo, geno_names, by.x = "MM_name", by.y = "MM_name")
-#sinfo_geno = sinfo_geno[,-c((ncol(sinfo_geno)-2):ncol(sinfo_geno))]
-
-
-sinfo_microbiome = merge(sinfo, log_rel_abun, by.x = "Sample_ID", by.y = "Sample_ID")
-sinfo_microbiome_avg =  as.data.frame( sinfo_microbiome[,c(2:6,8:ncol(sinfo_microbiome))] %>% group_by(row,MM_name, nitrogen, block, sp, spb) %>% summarise_all(mean))
-
-sinfo_microbiome_geno = merge(sinfo_microbiome_avg, geno_names, by.x = "MM_name", by.y = "MM_name")
-sinfo_microbiome_geno = sinfo_microbiome_geno[,-c((ncol(sinfo_microbiome_geno)-2):ncol(sinfo_microbiome_geno))]
-sinfo_microbiome_geno$MM_name = paste("c",ceiling(sinfo_microbiome_geno$row/2),sep = "_")
-colnames(sinfo_microbiome_geno)[1] = "ceil_id"
-
-library(rrBLUP)
-
-
-
-id_vis =11
-
-for (id_date in 4:6) {
-  #phenotype
-  #vegetation index
-  vis = fread("data/raw_phe.txt",header = T, data.table = F)
-  #vis = subset(vis, date == "12-Aug")
-  vis_canopy = vis[,c(1:9,id_vis)]
-  table(vis_canopy$date)
-  vis_canopy = spread(vis_canopy, key = "date", value = colnames(vis)[id_vis]) 
-  
-  vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_")
-  vis_canopy = vis_canopy[,c(21, 20, 10:16, 18, 9, 17, 19)]
-  
-  sinfo_pheno_microbiome_geno = merge(vis_canopy[,c(1,id_date)], sinfo_microbiome_geno, by.x = "ceil_id", by.y = "ceil_id")
-  
-  
-  #principal components
-  pcs = fread("data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec")
-  pcs = pcs[,2:5]
-  colnames(pcs) = c("genotype", paste0(rep("pc",3),1:3))
-  
-  sinfo_pheno_microbiome_geno_pc = merge(sinfo_pheno_microbiome_geno, pcs, by.x = "genotype", by.y = "genotype")
-  
-  id_na = which(is.na(sinfo_pheno_microbiome_geno_pc[, which(colnames(sinfo_pheno_microbiome_geno_pc) == colnames(vis_canopy)[id_date])]))
-  if (length(id_na) != 0) {
-    sinfo_pheno_microbiome_geno_pc = sinfo_pheno_microbiome_geno_pc[-id_na, ]
-  }
-  
-  
-  ##################################################################################
   
   y = matrix(sinfo_pheno_microbiome_geno_pc[,which(colnames(sinfo_pheno_microbiome_geno_pc) == colnames(vis_canopy)[id_date])],ncol = 1)
   
@@ -150,9 +123,9 @@ for (id_date in 4:6) {
   
   
   # K-fold validation
-  K = 10
+  K = 5
   d = floor(n/K)
-  set.seed(1234)
+  set.seed(id_seed)
   i.mix = sample(1:n)
   folds = vector(mode="list",length=K)
   
@@ -160,7 +133,7 @@ for (id_date in 4:6) {
     folds[[k]] = i.mix[((k-1)*d+1):(k*d)]
   }
   
-  p_K10_rr <- rep(0.0, 10)
+  p_K10_rr <- rep(0.0, 5)
   
   for (k in 1:K) {
     cat("Fold",k,"\n")
@@ -189,7 +162,7 @@ for (id_date in 4:6) {
   }
   
   
-  p_K10 <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],10)) , method = c(rep("rrBLUP", 10)),accuracy= c(p_K10_rr), fold = 1:10 , N = nrow(y))
+  p_K10 <- data.frame(seed = c(rep(id_seed, 5)), date = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],5)) , method = c(rep("rrBLUP", 5)),accuracy= c(p_K10_rr), fold = 1:5 , N = nrow(y))
   
   
   #rrBLUP with microbiome and PCs
@@ -224,9 +197,9 @@ for (id_date in 4:6) {
   
   
   # K-fold validation
-  K = 10
+  K = 5
   d = floor(n/K)
-  set.seed(1234)
+  set.seed(id_seed)
   i.mix = sample(1:n)
   folds = vector(mode="list",length=K)
   
@@ -234,7 +207,7 @@ for (id_date in 4:6) {
     folds[[k]] = i.mix[((k-1)*d+1):(k*d)]
   }
   
-  p_K10_rr_microbiome <- rep(0.0, 10)
+  p_K10_rr_microbiome <- rep(0.0, 5)
   
   for (k in 1:K) {
     cat("Fold",k,"\n")
@@ -262,7 +235,7 @@ for (id_date in 4:6) {
     
   }
   
-  p_K10_microbiome <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],10)) , method = c(rep("rrBLUP_PC_microbiome", 10)),accuracy= c(p_K10_rr_microbiome), fold = 1:10, N = nrow(y) )
+  p_K10_microbiome <- data.frame( seed = c(rep(id_seed, 5)), date = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],5)) , method = c(rep("rrBLUP_PC_microbiome", 5)),accuracy= c(p_K10_rr_microbiome), fold = 1:5, N = nrow(y) )
   
   
   
@@ -294,9 +267,9 @@ for (id_date in 4:6) {
   cor.test(y.hat2, y)
   
   # K-fold validation
-  K = 10
+  K = 5
   d = floor(n/K)
-  set.seed(1234)
+  set.seed(id_seed)
   i.mix = sample(1:n)
   folds = vector(mode="list",length=K)
   
@@ -304,7 +277,7 @@ for (id_date in 4:6) {
     folds[[k]] = i.mix[((k-1)*d+1):(k*d)]
   }
   
-  p_K10_rr_geno_microbiome <- rep(0.0, 10)
+  p_K10_rr_geno_microbiome <- rep(0.0, 5)
   
   for (k in 1:K) {
     cat("Fold",k,"\n")
@@ -334,14 +307,13 @@ for (id_date in 4:6) {
   }
   
   
-  p_K10_geno_microbiome <- data.frame( trait = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],10)) , method = c(rep("rrBLUP_geno_microbiome", 10)),accuracy= c(p_K10_rr_geno_microbiome), fold = 1:10, N = nrow(y) )
+  p_K10_geno_microbiome <- data.frame( seed = c(rep(id_seed, 5)), date = c(rep(colnames(sinfo_pheno_microbiome_geno_pc)[3],5)) , method = c(rep("rrBLUP_geno_microbiome", 5)),accuracy= c(p_K10_rr_geno_microbiome), fold = 1:5, N = nrow(y) )
   
   p_K10_all = rbind(p_K10, p_K10_microbiome, p_K10_geno_microbiome)
   
-  outname = paste0("largedata/prediction_accuracy_trait_", colnames(vis)[id_vis], "_date_",colnames(vis_canopy)[id_date],"_jyang.txt")
+  outname = paste0("largedata/outputs/prediction_accuracy_seed_", id_seed, "_trait_",colnames(vis)[id_trait], "_date_",colnames(vis_canopy)[id_date],"_jyang.txt")
   fwrite(p_K10_all, outname, sep = "\t", quote = F, row.names = F, col.names = T)
   rm(sinfo_pheno_microbiome_geno_pc)
-}
 
 
 
