@@ -11,7 +11,7 @@
 #SBATCH -o /common/jyanglab/zhikaiyang/projects/GP_microbiome/slurm-log/genomic_prediction_jyang_%A_%a_out.txt
 #SBATCH -e /common/jyanglab/zhikaiyang/projects/GP_microbiome/slurm-log/genomic_prediction_jyang_%A_%a_error.txt
 
-#SBATCH --array=7
+#SBATCH --array=7-14
 
 module load R/3.5
 Rscript /common/jyanglab/zhikaiyang/projects/GP_microbiome/largedata/genomic_prediction_jyang_data_seeds_vis.R $1 $2 $SLURM_ARRAY_TASK_ID

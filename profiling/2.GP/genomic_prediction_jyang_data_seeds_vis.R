@@ -92,7 +92,7 @@ if (length(id_na) != 0) {
             ifelse(sinfo_pheno_microbiome_geno_pc$nitrogen == "HN", 1, 0), 
             ifelse(sinfo_pheno_microbiome_geno_pc$block == "N", 1, 0))
   
-  id_1st_snp = which(colnames(sinfo_pheno_microbiome_geno_pc) == "1-25630")
+  id_1st_snp = which(colnames(sinfo_pheno_microbiome_geno_pc) == "1-25630")  #  3635th column is the 1st SNP
   
   Z = as.matrix(sinfo_pheno_microbiome_geno_pc[,id_1st_snp:(id_1st_snp+49999)])
   
