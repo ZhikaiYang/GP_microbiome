@@ -45,13 +45,13 @@ sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header
 #phenotype
 #vegetation index
 vis = fread("data/ppj220030-sup-0003-tables2.csv",header = T, data.table = F)
-# information from column 1 to 9
+# information from column 1 to 6
 
 # Row : the row number of the observation for one genotype
-# sb, spb, Rep, Row.Numbers, Genotype, Pedigree, Treatment : won't be used 
+# Row.Numbers, Genotype, Pedigree, Treatment : won't be used 
 # date: the date of data collected
 
-# vegetation indexes from column 10 to 18
+# vegetation indexes from column 7 to 14
 
 
 
