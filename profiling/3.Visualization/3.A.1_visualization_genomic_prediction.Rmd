@@ -94,6 +94,27 @@ t.test(p_K10$accuracy[p_K10$method=="rrBLUP"], p_K10$accuracy[p_K10$method=="rrB
 
 ```
 
+#Vegetation Indices visualization
+
+```{r}
+
+vis = fread("data/ppj220030-sup-0003-tables2.csv", data.table = F)
+library(ggplot2)
+library(GGally)
+set.seed(1234)
+
+pdf("largedata/Vegetation Indices.pdf", width=14, height=11.5)
+ggpairs(vis[sort(sample(1:nrow(vis), 1000)),7:ncol(vis)],title = "Vegetation Indices")
+dev.off()
+
+for (i in 7:13) {
+  print(colnames(vis)[i])
+  print(mean(vis[,i]))
+  print(var(vis[,i]))
+}
+  
+```
+
 
 #all vegetation indexes visualization
 ```{r}
@@ -625,3 +646,487 @@ figure
 
 
 ```
+
+
+
+
+
+
+
+
+#coef of microbiome, on HCC
+```{r}
+f <- list.files(path="largedata/outputs", pattern="coef_mic_trait", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+out = out[,-3]
+
+
+
+fwrite(out, "largedata/coef_mic_all_traits_dates.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+#coef of microbiome spread
+```{r}
+
+coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
+
+
+coef_all$date <- factor(coef_all$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(coef_all$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggboxplot(coef_all[which((coef_all$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
+    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Coef of ASVs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+```
+
+#top abs_scaled asvs
+```{r}
+coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
+coef_vis = coef_all[-which(coef_all$trait == "Canopy_Coverage"),]
+rownames(coef_vis) = 1:nrow(coef_vis)
+vis = as.character(data.frame(table(coef_vis$trait))$Var1)
+date = as.character(data.frame(table(coef_vis$date))$Var1)
+#coef_ExG = coef_all[which(coef_all$trait == "ExG"),]
+#id_top = which(coef_ExG$abs_coef >= 0.001)
+#coef_all_top = coef_all[id_top,]
+
+coef_vis_mean =  as.data.frame( coef_vis[,-1] %>% group_by(trait, date) %>% summarise_all(mean))
+coef_vis_var =  as.data.frame( coef_vis[,-1] %>% group_by(trait, date) %>% summarise_all(var))
+coef_vis_scaled = as.data.frame( coef_vis[,-1] %>% group_by(trait, date) %>% summarise_all(scale))
+coef_vis_scaled$asv = coef_vis$asv
+coef_vis_scaled_var = as.data.frame( coef_vis_scaled[,-4] %>% group_by(trait, date) %>% summarise_all(var))
+coef_vis_scaled$abs_scaled_coef = abs(coef_vis_scaled$coef)
+coef_vis_scaled_asv_rank = as.data.frame( coef_vis_scaled[,4:5] %>% group_by(asv) %>% summarise_all(sum))
+coef_vis_scaled_asv_rank$rank = rank(coef_vis_scaled_asv_rank$abs_scaled_coef)
+coef_vis_scaled_asv_rank = coef_vis_scaled_asv_rank[order(-coef_vis_scaled_asv_rank$abs_scaled_coef),]
+coef_vis_scaled_asv_rank$rank = 1:nrow(coef_vis_scaled_asv_rank)
+
+```
+
+#top #of traits asvs
+```{r}
+coef_ExG_Aug12 = coef_vis[which((coef_vis$trait == "ExG")  & (coef_vis$date == "Aug12")),]
+#coef_ExG_Aug12$scoef = scale(coef_ExG_Aug12$coef)
+coef_ExG_Aug12$abs_coef = abs(coef_ExG_Aug12$coef)
+coef_ExG_Aug12 = coef_ExG_Aug12[order(-coef_ExG_Aug12$abs_coef),]
+coef_ExG_Aug12$rank = 1:nrow(coef_ExG_Aug12)
+coef_ExG_Aug12$top1p = ifelse(coef_ExG_Aug12$rank <= 36, 1, 0)
+
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_vis[which((coef_vis$trait == vis[i])  & (coef_vis$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+asv_coef_vis = as.data.frame(out[,-(3:4)] %>% group_by(asv) %>% summarise_all(sum))
+asv_date_coef_vis = as.data.frame(out[,-3] %>% group_by(date,asv) %>% summarise_all(sum))
+#asv_date_coef_vis = asv_date_coef_vis[which(asv_date_coef_vis$top100 > 0),]
+asv_date_coef_vis$top1p = as.character(asv_date_coef_vis$top1p)
+asv_date_coef_vis$top100 = as.character(asv_date_coef_vis$top100)
+asv_date_coef_vis$count = 1
+date_ntrait_count_top1p = as.data.frame(asv_date_coef_vis[,c(1,6,8)] %>% group_by(date,top1p) %>% summarise_all(sum))
+date_ntrait_count_top1p$date <- factor(date_ntrait_count_top1p$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+p_date_ntrait_count_top1p = ggplot(date_ntrait_count_top1p[-which(date_ntrait_count_top1p$top1p == "0"),], aes(x=date, y=count, fill=top1p)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Blues")+
+    xlab("") +
+    ylab("Count of top 1% ASVs") +
+    ggtitle("Histograms of Num of Traits by different dates ") +
+    theme_dark() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_date_ntrait_count_top1p
+
+
+date_asv_top1 = asv_date_coef_vis[,c(1,2,6)]
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+date_asv_mic_group_top1 = merge(date_asv_top1, asv_mic_group, by.x = "asv", by.y = "ASV")
+mic_group_anno = fread("largedata/elife-75790-supp3-v2.csv", data.table = F)
+
+count_mic_g = as.data.frame(table(date_asv_mic_group_top1$Functional_Tax_Group))
+count_mic_g$Var1[which(!(count_mic_g$Var1 %in% unique(mic_group_anno$Microbial_Group)))]
+
+#HN
+date_asv_mic_group_top1_anno_HN = merge(date_asv_mic_group_top1, mic_group_anno[which(mic_group_anno$nitrogen_treatment == "HN"),], by.x = "Functional_Tax_Group", by.y ="Microbial_Group")
+
+date_asv_mic_group_top1_anno_HN$iftop1p = ifelse(date_asv_mic_group_top1_anno_HN$top1p >= 1, "Top 1% ASVs", "Not Top 1% ASVs")
+
+date_asv_mic_group_top1_anno_HN$date <- factor(date_asv_mic_group_top1_anno_HN$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+#LN
+date_asv_mic_group_top1_anno_LN = merge(date_asv_mic_group_top1, mic_group_anno[which(mic_group_anno$nitrogen_treatment == "LN"),], by.x = "Functional_Tax_Group", by.y ="Microbial_Group")
+
+date_asv_mic_group_top1_anno_LN$iftop1p = ifelse(date_asv_mic_group_top1_anno_LN$top1p >= 1, "Top 1% ASVs", "Not Top 1% ASVs")
+
+date_asv_mic_group_top1_anno_LN$date <- factor(date_asv_mic_group_top1_anno_LN$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+date_asv_mic_group_jtop1_anno_LN_aug12 = date_asv_mic_group_top1_anno_LN[which((date_asv_mic_group_top1_anno_LN$date == "Aug-12") & (date_asv_mic_group_top1_anno_LN$iftop1p == "Top 1% ASVs")), ]
+
+fwrite(date_asv_mic_group_jtop1_anno_LN_aug12, "largedata/date_asv_mic_group_jtop1_anno_LN_aug12.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+date_asv_mic_group_jtop1_anno_LN_aug12 = fread("largedata/date_asv_mic_group_jtop1_anno_LN_aug12.txt", data.table = F)
+
+p_h2_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Heritability") +
+    ggtitle("HN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_h2_HN
+
+p_h2_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Heritability") +
+    ggtitle("LN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_h2_LN
+
+
+p_Selection_coeff_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Selection_coeff") +
+    ggtitle("HN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_Selection_coeff_HN
+
+p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Selection_coeff") +
+    ggtitle("LN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_Selection_coeff_LN
+
+```
+
+
+#coef of SNPs, on HCC
+```{r}
+f <- list.files(path="largedata/outputs", pattern="coef_snps_trait", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+out = out[,-3]
+
+
+
+fwrite(out, "largedata/coef_snps_all_traits_dates.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+#coef of snps
+```{r}
+
+coef_all_snps = fread("largedata/coef_snps_all_traits_dates.txt", data.table = F)
+
+coef_all_snps$date <- factor(coef_all_snps$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(coef_all_snps$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggboxplot(coef_all_snps[which((coef_all_snps$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
+    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Coef of SNPs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+pdf("largedata/coef_snps.pdf", width = 12, height= 9)
+figure
+dev.off()
+
+
+```
+
+
+# R2 of different sources
+```{r}
+f <- list.files(path="largedata/outputs", pattern="r2_d_rrblup_geno_microbiome_trait", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+
+out = out[,-4]
+fwrite(out, "largedata/r2_d_rrblup_geno_microbiome_traits.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+```
+
+
+
+# visualization of R2 of different sources
+```{r}
+r2_d_rrblup_geno_microbiome = fread("largedata/r2_d_rrblup_geno_microbiome_traits.txt", data.table = F)
+
+
+
+fsize =16
+
+
+r2_d_rrblup_geno_microbiome$source <- factor(r2_d_rrblup_geno_microbiome$source, levels = c("total", "fixed_and_random", "fixed", "random", "genome", "microbiome", "residual"), labels =c("total", "fixed_and_random", "fixed", "random", "genome", "microbiome", "residual"))
+
+r2_d_rrblup_geno_microbiome$date <- factor(r2_d_rrblup_geno_microbiome$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(r2_d_rrblup_geno_microbiome$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[i])),], aes(x=date, y=r2, fill=source)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Paired")+
+    xlab("") +
+    ylab("R-squared") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+
+
+```
+
+
+
+# R2 of different sources
+```{r}
+f <- list.files(path="largedata/outputs", pattern="r2_d_nitrogen_rrblup_geno_microbiome_trait", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+
+out = out[,-4]
+fwrite(out, "largedata/r2_d_nitrogen_rrblup_geno_microbiome_traits.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+```
+
+
+
+# visualization of R2 of different sources
+```{r}
+r2_d_rrblup_geno_microbiome = fread("largedata/r2_d_nitrogen_rrblup_geno_microbiome_traits.txt", data.table = F)
+
+r2_d_rrblup_geno_microbiome = r2_d_rrblup_geno_microbiome[which(r2_d_rrblup_geno_microbiome$source %in% c("nitrogen", "genome", "microbiome")),]
+
+fsize =16
+
+
+r2_d_rrblup_geno_microbiome$source <- factor(r2_d_rrblup_geno_microbiome$source, levels = c("nitrogen", "genome", "microbiome"), labels =c("nitrogen", "genome", "microbiome"))
+
+r2_d_rrblup_geno_microbiome$date <- factor(r2_d_rrblup_geno_microbiome$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(r2_d_rrblup_geno_microbiome$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[i])),], aes(x=date, y=r2, fill=source)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Paired")+
+    xlab("") +
+    ylab("Variance Explained") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+p_vari_var_part = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[6])),], aes(x=date, y=r2, fill=source)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Paired")+
+    xlab("Days after microbiome sampling") +
+    ylab("Variance Explained") +
+    ggtitle(vis[6]) +
+    theme_classic() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+pdf("largedata/p_vari_var_partition.pdf", width = 6, height= 6)
+p_vari_var_part
+dev.off()
+
+
+
+```
+
