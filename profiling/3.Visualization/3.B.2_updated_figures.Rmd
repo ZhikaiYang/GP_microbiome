@@ -661,3 +661,43 @@ p_date_ntrait_count_top1p
 
 ```
 
+
+```{r}
+mediators_asvs = fread("largedata/mediators_asvs.txt")
+mediators_asvs = mediators_asvs[-which(mediators_asvs$trait == "Canopy_Coverage"),]
+
+mediators_asvs_sig = mediators_asvs[which(mediators_asvs$padj<=0.05),]
+
+mediators_asvs_count_sig = as.data.frame(table(mediators_asvs_sig$id))
+
+
+mediators_asvs_count_sig = mediators_asvs_count_sig[order(mediators_asvs_count_sig$Freq, decreasing = T),]
+rownames(mediators_asvs_count_sig) = 1:nrow(mediators_asvs_count_sig)
+
+id_mediator_top1 = which(mediators_asvs_count_sig$Var1 %in% unique(date_asv_mic_group_top1$asv[which(date_asv_mic_group_top1$top1p >0)]))
+
+mediators_asvs_count_sig_group = merge(mediators_asvs_count_sig, asv_mic_group, by.x = "Var1", by.y = "ASV")
+
+
+p_date_ntrait_count_top1p = ggplot(date_ntrait_count_top1p[-which(date_ntrait_count_top1p$top1p == "0"),], aes(x=date, y=count, fill=top1p)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Blues")+
+    xlab("") +
+    ylab("Count of top 1% ASVs") +
+    ggtitle("Histograms of Num of Traits by different dates ") +
+    theme_dark() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_date_ntrait_count_top1p
+
+```
+
