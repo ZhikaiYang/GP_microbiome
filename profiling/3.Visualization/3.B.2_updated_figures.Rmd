@@ -601,6 +601,55 @@ dev.off()
 
 
 ```
+
+
+#top abs_scaled asvs
+
+```{r}
+coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
+coef_vis = coef_all[-which(coef_all$trait == "Canopy_Coverage"),]
+rownames(coef_vis) = 1:nrow(coef_vis)
+vis = as.character(data.frame(table(coef_vis$trait))$Var1)
+date = as.character(data.frame(table(coef_vis$date))$Var1)
+
+
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_vis[which((coef_vis$trait == vis[i])  & (coef_vis$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+asv_coef_vis = as.data.frame(out[,-(3:4)] %>% group_by(asv) %>% summarise_all(sum))
+asv_date_coef_vis = as.data.frame(out[,-3] %>% group_by(date,asv) %>% summarise_all(sum))
+#asv_date_coef_vis = asv_date_coef_vis[which(asv_date_coef_vis$top100 > 0),]
+asv_date_coef_vis$top1p = as.character(asv_date_coef_vis$top1p)
+asv_date_coef_vis$top100 = as.character(asv_date_coef_vis$top100)
+asv_date_coef_vis$count = 1
+date_ntrait_count_top1p = as.data.frame(asv_date_coef_vis[,c(1,6,8)] %>% group_by(date,top1p) %>% summarise_all(sum))
+date_ntrait_count_top1p$date <- factor(date_ntrait_count_top1p$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+
+date_asv_top1 = asv_date_coef_vis[,c(1,2,6)]
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+date_asv_mic_group_top1 = merge(date_asv_top1, asv_mic_group, by.x = "asv", by.y = "ASV")
+mic_group_anno = fread("largedata/elife-75790-supp3-v2.csv", data.table = F)
+
+count_mic_g = as.data.frame(table(date_asv_mic_group_top1$Functional_Tax_Group))
+count_mic_g$Var1[which(!(count_mic_g$Var1 %in% unique(mic_group_anno$Microbial_Group)))]
+
+```
+
+
+
 ### mediation analysis
 
 ```{r}
@@ -624,7 +673,7 @@ fwrite(out[,-7],"largedata/mediators_asvs.txt", sep="\t", row.names = F, quote =
 
 ```
 
-
+# including non-sig mediators
 ```{r}
 mediators_asvs = fread("largedata/mediators_asvs.txt")
 mediators_asvs = mediators_asvs[-which(mediators_asvs$trait == "Canopy_Coverage"),]
@@ -639,29 +688,10 @@ id_mediator_top1 = which(mediators_asvs_count_all$Var1 %in% unique(date_asv_mic_
 mediators_asvs_count_all_group = merge(mediators_asvs_count_all, asv_mic_group, by.x = "Var1", by.y = "ASV")
 
 
-p_date_ntrait_count_top1p = ggplot(date_ntrait_count_top1p[-which(date_ntrait_count_top1p$top1p == "0"),], aes(x=date, y=count, fill=top1p)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  scale_fill_brewer(palette="Blues")+
-    xlab("") +
-    ylab("Count of top 1% ASVs") +
-    ggtitle("Histograms of Num of Traits by different dates ") +
-    theme_dark() +
-    #labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=fsize-2, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "right", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-p_date_ntrait_count_top1p
 
 ```
 
-
+# just sig mediators after multiple comparison adjustment
 ```{r}
 mediators_asvs = fread("largedata/mediators_asvs.txt")
 mediators_asvs = mediators_asvs[-which(mediators_asvs$trait == "Canopy_Coverage"),]
@@ -679,25 +709,43 @@ id_mediator_top1 = which(mediators_asvs_count_sig$Var1 %in% unique(date_asv_mic_
 mediators_asvs_count_sig_group = merge(mediators_asvs_count_sig, asv_mic_group, by.x = "Var1", by.y = "ASV")
 
 
-p_date_ntrait_count_top1p = ggplot(date_ntrait_count_top1p[-which(date_ntrait_count_top1p$top1p == "0"),], aes(x=date, y=count, fill=top1p)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  scale_fill_brewer(palette="Blues")+
-    xlab("") +
-    ylab("Count of top 1% ASVs") +
-    ggtitle("Histograms of Num of Traits by different dates ") +
-    theme_dark() +
-    #labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=fsize-2, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "right", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
 
-p_date_ntrait_count_top1p
+
+```
+
+
+
+#isnps
+```{r}
+library(data.table)
+f <- list.files(path="largedata/med_output", pattern="isnps_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- read.csv(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+
+out$method  <- gsub(".*isnps_|_trait.*", "", out$file)
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.csv", "", out$file)
+
+fwrite(out[,-4],"largedata/isnps_asvs.txt", sep="\t", row.names = F, quote = F)
+
+
+```
+
+```{r}
+isnps_asvs = fread("largedata/isnps_asvs.txt")
+isnps_asvs$sig_id = paste(isnps_asvs$medi, isnps_asvs$method, isnps_asvs$trait, isnps_asvs$date, sep = "_")
+
+mediators_asvs_sig$sig_id = paste(mediators_asvs_sig$id, mediators_asvs_sig$method, mediators_asvs_sig$trait, mediators_asvs_sig$date, sep = "_")
+
+isnps_asvs = isnps_asvs[which(isnps_asvs$sig_id %in% mediators_asvs_sig$sig_id),]
+
+isnps_asvs_vari = isnps_asvs[which(isnps_asvs$trait == "VARI"),]
 
 ```
 
