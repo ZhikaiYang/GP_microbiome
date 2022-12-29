@@ -822,15 +822,10 @@ psn <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$nitrogen[
           axis.title=element_text(size=fsize, face="bold"),
           #axis.text.x = element_text(angle = 15, hjust=0.8),
           #legend.position = c(0.2, 0.8), 
-          legend.position = "bottom",
+          legend.position = "none",
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 psn
-
-
-ggplot(mtcars, aes(x=wt, y=mpg)) + 
-  geom_point()+
-  geom_smooth(method=lm)
 
 
 pall_s <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02])) + 
@@ -858,7 +853,7 @@ cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02], sinfo_pheno_asv_isnp$Aug12[id_0
 
 
 
-psn_s <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+psn_s_aug12 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -873,25 +868,81 @@ psn_s <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000
           axis.title=element_text(size=fsize, face="bold"),
           #axis.text.x = element_text(angle = 15, hjust=0.8),
           #legend.position = c(0.2, 0.8), 
-          legend.position = "bottom",
+          legend.position = "none",
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
-psn_s
+psn_s_aug12
+
+psn_s_aug22 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug22[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_aug22
+
+psn_s_sep5 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Sept5[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_sep5
+
 
 id_02_hn = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN")))
 
 cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Aug12[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Aug22[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Sept5[id_02_hn], method = "spearman")
+
 
 id_02_ln = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("LN")))
 
 cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Aug12[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Aug22[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Sept5[id_02_ln], method = "spearman")
 
 
-pdf("graphs/rna_FG005_AG_alleles.pdf", width = 5, height= 5)
-pall
+pdf("largedata/asv_N.pdf", width = 5, height= 5)
+psn
 dev.off()
 
 
+pdf("largedata/cor_vis_aug12_asv.pdf", width = 8, height= 5)
+psn_s_aug12
+dev.off()
+
+figure <- ggarrange(psn, psn_s_aug12,psn_s_aug22,psn_s_sep5, ncol = 2, nrow = 2)
+figure
+
+pdf("largedata/asv_N_and_cor_vis_asv.pdf", width = 16, height= 10)
+figure
+dev.off()
 
 ```
 
