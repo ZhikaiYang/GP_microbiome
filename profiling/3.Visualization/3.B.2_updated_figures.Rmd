@@ -762,7 +762,7 @@ sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header
 
 id_asv_isnp = which(colnames(sinfo_microbiome_geno) %in% c(unique(isnps_asvs$medi),unique(isnps_asvs$snps_for_medi)))
 
-sinfo_asv_isnp = sinfo_microbiome_geno[,c(1:6,id_asv_isnp)]
+sinfo_asv_isnp = sinfo_microbiome_geno[,c(1:6,3633,id_asv_isnp)] # genotype (column 3633)
 fwrite(sinfo_asv_isnp,"largedata/sinfo_asv_isnp.txt", sep="\t", row.names = F, quote = F)
 
 ```
@@ -943,6 +943,53 @@ figure
 pdf("largedata/asv_N_and_cor_vis_asv.pdf", width = 16, height= 10)
 figure
 dev.off()
+
+```
+
+#hcc
+#The master FPM file
+```{r}
+# /common/jyanglab/shared/dbcenter/Kremling_Nature3RNASeq282_March2018/Expression_matrix/df_STAR_HTSeq_counts_B73_match_based_on_genet_dist_DESeq2_normed_fpm_rounded_origNames_and_Altnames.txt
+library("data.table")
+rna <- fread("/common/jyanglab/shared/dbcenter/Kremling_Nature3RNASeq282_March2018/Expression_matrix/df_STAR_HTSeq_counts_B73_match_based_on_genet_dist_DESeq2_normed_fpm_rounded_origNames_and_Altnames.txt", header=TRUE, data.table=FALSE)
+# 1960 37136
+
+### select the top 4 with Freq >2
+
+myr <- rna[, c(1:9, which(names(rna) == "GRMZM2G124434"))]
+
+write.table(myr, "largedata/gme1.txt", sep="\t", row.names = FALSE, quote=FALSE)
+```
+
+#on local
+```{r}
+id_02 = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN","LN"))) 
+geno_snp =  sinfo_pheno_asv_isnp[id_02, which(colnames(sinfo_pheno_asv_isnp) %in%  c("genotype","1-240925424"))]
+geno_snp = geno_snp[!duplicated(geno_snp$genotype),]
+myr = fread("largedata/gme1.txt",header = T, data.table = F)
+
+gme1 = merge(myr[,c(2,3,7,10)], geno_snp , by.x = "RawPhenotypeNames", by.y = "genotype")
+gme1$`1-240925424` = as.character(gme1$`1-240925424`)
+
+p_gme1 <- ggplot(gme1, aes(x=TissueWODate, y=GRMZM2G124434, fill=`1-240925424`)) + 
+  geom_violin(trim=FALSE) +
+  stat_compare_means(aes(group = `1-240925424`), label = "p.signif", method = "wilcox.test") +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "bottom",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+p_gme1
 
 ```
 
