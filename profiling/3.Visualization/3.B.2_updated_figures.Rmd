@@ -409,6 +409,13 @@ p_vari_shuffled_ln_sep5 = ggboxplot(pred_all_nitrogen_compare[which((pred_all_ni
 
 ```
 
+#LN
+```{r}
+vari_ln = subset(pred_all_nitrogen_compare, trait == "VARI" & nitrogen == "LN")
+
+vari_ln_avg = as.data.frame(vari_ln %>% group_by(date, method, trait, nitrogen) %>% summarise_all(mean))
+```
+
 
 #coef of microbiome spread
 ```{r}
