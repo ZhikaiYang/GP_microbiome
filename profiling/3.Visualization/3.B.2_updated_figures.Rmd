@@ -633,6 +633,11 @@ for(i in 1:length(vis)){
   }
 }
 
+asv_coef_vari = out[which(out$trait == "VARI"),]
+asv_coef_vari = asv_coef_vari[which(asv_coef_vari$top1p == 1),]
+row.names(asv_coef_vari) = 1:nrow(asv_coef_vari)
+intersect(intersect(asv_coef_vari$asv[1:36], asv_coef_vari$asv[37:72]),asv_coef_vari$asv[73:108])
+
 asv_coef_vis = as.data.frame(out[,-(3:4)] %>% group_by(asv) %>% summarise_all(sum))
 asv_date_coef_vis = as.data.frame(out[,-3] %>% group_by(date,asv) %>% summarise_all(sum))
 #asv_date_coef_vis = asv_date_coef_vis[which(asv_date_coef_vis$top100 > 0),]
