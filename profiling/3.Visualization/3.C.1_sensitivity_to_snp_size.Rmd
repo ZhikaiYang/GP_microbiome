@@ -1,0 +1,223 @@
+---
+title: "Genomic Selection practice"
+author: "Zhikai Yang"
+date: "Sept 9th, 2022"
+output: NULL
+---
+
+
+## Normalize the path:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+knitr::opts_knit$set(root.dir=normalizePath('../../')) 
+```
+
+#on HCC
+```{r}
+library(data.table)
+f <- list.files(path="largedata/outputs_snp25k", pattern="prediction_accuracy_seed", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/pred_vis_dates_seeds_snp25k.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+
+#on HCC
+```{r}
+library(data.table)
+f <- list.files(path="largedata/outputs_snp10k", pattern="prediction_accuracy_seed", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/pred_vis_dates_seeds_snp10k.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+
+
+```{r}
+library(data.table)
+library(ggplot2)
+library(agricolae)
+library(ggpubr)
+library(dplyr)
+
+pred_vis = fread("largedata/pred_vis_dates_seeds.txt", data.table = F)
+pred_vis$snp = "50k"
+pred_aug22 = fread("largedata/pred_canopy_vis_Aug22_seeds.txt", data.table = F)
+pred_aug22$snp = "50k"
+pred_vis_snp25k = fread("largedata/pred_vis_dates_seeds_snp25k.txt", data.table = F)
+pred_vis_snp25k$snp = "25k"
+pred_vis_snp10k = fread("largedata/pred_vis_dates_seeds_snp10k.txt", data.table = F)
+pred_vis_snp10k$snp = "10k"
+pred_all = rbind(pred_vis, pred_aug22, pred_vis_snp25k, pred_vis_snp10k) 
+pred_all = pred_all[-(which(pred_all$date == "July6")),]
+pred_all = pred_all[-(which(pred_all$trait == "Canopy_Coverage")),]
+
+
+pred_all_avg =  as.data.frame( pred_all %>% group_by(trait, date, method, seed, snp) %>% summarise_all(mean))
+
+
+pred_all_avg$date <- factor(pred_all_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+pred_all_avg$method <- factor(pred_all_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome"), labels =c( "SNP", "SNP + ASV"))
+
+
+vis = as.character(data.frame(table(pred_all_avg$trait))$Var1)
+
+fsize = 18
+i = 6
+
+my_comparisons <- list(c("50k", "25k"),c("50k", "10k"))
+
+compare_means(accuracy ~ snp, pred_all_avg[which( (pred_all_avg$trait == vis[i]) & (pred_all_avg$date == "Sep-5")),], method = "t.test")
+
+p_vari_snp_aug12 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) & (pred_all_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "snp", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = snp), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_snp_aug22 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) & (pred_all_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "snp", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = snp), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_snp_sep5 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) & (pred_all_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "snp", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = snp), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+p_vari_shuffled = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+
+p_vari_c <- ggarrange(p_vari_shuffled, p_vari_improve, ncol = 2, nrow = 1)
+p_vari_c
+
+
+pdf("largedata/p_vari_snp_aug12.pdf", width = 10, height= 6)
+p_vari_snp_aug12
+dev.off()
+
+
+pdf("largedata/p_vari_snp_aug22.pdf", width = 10, height= 6)
+p_vari_snp_aug22
+dev.off()
+
+pdf("largedata/p_vari_snp_sep5.pdf", width = 10, height= 6)
+p_vari_snp_sep5
+dev.off()
+
+
+
+
+
+plist = list()
+
+for (i in 2:9) {
+    plist[[i]] = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.4, 0.9)) +
+    theme(plot.title = element_text(size=16, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=14, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=14, face="bold"),
+          legend.text = element_text(size=14))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+pdf("largedata/p_vis.pdf", width = 13, height= 10)
+figure
+dev.off()
+
+```
