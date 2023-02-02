@@ -86,6 +86,7 @@ pred_all_avg =  as.data.frame( pred_all %>% group_by(trait, date, method, seed, 
 pred_all_avg$date <- factor(pred_all_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
 pred_all_avg$method <- factor(pred_all_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome"), labels =c( "SNP", "SNP + ASV"))
 
+pred_all_avg_mean = as.data.frame(pred_all_avg %>% group_by(trait, date, method, snp) %>% summarise_all(mean))
 
 vis = as.character(data.frame(table(pred_all_avg$trait))$Var1)
 
@@ -108,8 +109,8 @@ p_vari_snp_aug12 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) &
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
           axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -125,8 +126,8 @@ p_vari_snp_aug22 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) &
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
           axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -142,81 +143,17 @@ p_vari_snp_sep5 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) & 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
           axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-
-p_vari_shuffled = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
           legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
-
-
-
-p_vari_c <- ggarrange(p_vari_shuffled, p_vari_improve, ncol = 2, nrow = 1)
-p_vari_c
-
-
-pdf("largedata/p_vari_snp_aug12.pdf", width = 10, height= 6)
-p_vari_snp_aug12
-dev.off()
-
-
-pdf("largedata/p_vari_snp_aug22.pdf", width = 10, height= 6)
-p_vari_snp_aug22
-dev.off()
-
-pdf("largedata/p_vari_snp_sep5.pdf", width = 10, height= 6)
-p_vari_snp_sep5
-dev.off()
-
-
-
-
-
-plist = list()
-
-for (i in 2:9) {
-    plist[[i]] = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(vis[i]) +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_y_continuous(limits = c(0.4, 0.9)) +
-    theme(plot.title = element_text(size=16, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=14, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=14, face="bold"),
-          legend.text = element_text(size=14))
-
-    
-}
 
 
 library(ggpubr)
-figure <- ggarrange(plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure <- ggarrange(p_vari_snp_aug12,p_vari_snp_aug22,p_vari_snp_sep5, ncol = 3, nrow = 1)
 figure
 
-pdf("largedata/p_vis.pdf", width = 13, height= 10)
+pdf("largedata/p_vari_snp_dates3.pdf", width = 13, height= 6)
 figure
 dev.off()
 
