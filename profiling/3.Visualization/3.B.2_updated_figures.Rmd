@@ -447,6 +447,31 @@ p_vari_coef_mic = ggboxplot(coef_all[which((coef_all$trait == vis[i])),], x = "d
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
+library(ggplot2)
+library(dplyr)
+library(hrbrthemes)
+library(viridis)
+
+p_vari_coef_mic = ggplot(coef_all[which((coef_all$trait == vis[i])),], aes(x=date, y=coef, fill=date)) +
+    geom_violin(width=1.2) +
+    geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    xlab("") +
+    ylab("Coef of ASVs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
 
 highlight1 = coef_all[which((coef_all$trait == vis[i]) & (coef_all$asv %in% c("asv_000278"))),]
 highlight2 = coef_all[which((coef_all$trait == vis[i]) & (coef_all$asv %in% c( "asv_000183"))),]
@@ -501,13 +526,33 @@ p_vari_coef_snp = ggboxplot(coef_all_snps[which((coef_all_snps$trait == vis[i]))
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
+p_vari_coef_snp = ggplot(coef_all_snps[which((coef_all_snps$trait == vis[i])),], aes(x=date, y=coef, fill=date)) +
+    geom_violin(width=0.9) +
+    geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    xlab("") +
+    ylab("Coef of SNPs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
 
 p_vari_coef <- ggarrange(p_vari_coef_mic, p_vari_coef_snp, ncol = 2, nrow = 1)
 
 
 
 
-pdf("largedata/p_vari_coef_mic_snps.pdf", width = 12, height= 9)
+pdf("largedata/p_vari_coef_mic_snps_violin_box2.pdf", width = 12, height= 9)
 p_vari_coef
 dev.off()
 
