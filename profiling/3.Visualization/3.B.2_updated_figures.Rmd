@@ -47,7 +47,7 @@ pred_all_compare$method <- factor(pred_all_compare$method, levels = c( "rrBLUP",
 vis = as.character(data.frame(table(pred_all_compare$trait))$Var1)
 
 fsize = 18
-i = 9
+i = 7
 
 my_comparisons <- list(c("SNP", "SNP + ASV"),c("SNP", "SNP + shuffled ASV"))
 
@@ -703,6 +703,11 @@ mic_group_anno = fread("largedata/elife-75790-supp3-v2.csv", data.table = F)
 count_mic_g = as.data.frame(table(date_asv_mic_group_top1$Functional_Tax_Group))
 count_mic_g$Var1[which(!(count_mic_g$Var1 %in% unique(mic_group_anno$Microbial_Group)))]
 
+
+
+top_asv_coef_vari_group = merge(asv_mic_group, asv_coef_vari,  by.x = "ASV", by.y = "asv")
+
+fwrite(top_asv_coef_vari_group[,-ncol(top_asv_coef_vari_group)], "data/supplementary/Supplemental_Table_S1_top_one_percent_asvs.txt", sep="\t", row.names = F, quote = F)
 ```
 
 
@@ -745,7 +750,6 @@ id_mediator_top1 = which(mediators_asvs_count_all$Var1 %in% unique(date_asv_mic_
 mediators_asvs_count_all_group = merge(mediators_asvs_count_all, asv_mic_group, by.x = "Var1", by.y = "ASV")
 
 
-
 ```
 
 # just sig mediators after multiple comparison adjustment
@@ -758,6 +762,7 @@ mediators_asvs_sig = mediators_asvs[which(mediators_asvs$padj<=0.05),]
 mediators_asvs_count_sig = as.data.frame(table(mediators_asvs_sig$id))
 
 
+
 mediators_asvs_count_sig = mediators_asvs_count_sig[order(mediators_asvs_count_sig$Freq, decreasing = T),]
 rownames(mediators_asvs_count_sig) = 1:nrow(mediators_asvs_count_sig)
 
@@ -766,8 +771,9 @@ id_mediator_top1 = which(mediators_asvs_count_sig$Var1 %in% unique(date_asv_mic_
 mediators_asvs_count_sig_group = merge(mediators_asvs_count_sig, asv_mic_group, by.x = "Var1", by.y = "ASV")
 
 
+mediators_asvs_sig_group = merge(asv_mic_group, mediators_asvs_sig,  by.x = "ASV", by.y = "id")
 
-
+fwrite(mediators_asvs_sig_group[which(mediators_asvs_sig_group$method %in% c("fixed_bic", "fixed_eq")),], "data/supplementary/Supplemental_Table_S2_mediator_asvs.txt", sep="\t", row.names = F, quote = F)
 ```
 
 
