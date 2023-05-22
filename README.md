@@ -12,21 +12,21 @@
   - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
 
 #### Genome-sequencing data
-- Whole genome sequencing data (n=271) of HapMap V3.2.1 (with imputation, AGPv4) obtained from the Panzea database https://www.panzea.org/genotypes (for more information : [Bukowski et. al., 2018](https://doi.org/10.1093/gigascience/gix134)
+- Whole genome sequencing data (n=271) of HapMap V3.2.1 (with imputation, AGPv4) obtained from the Panzea database https://www.panzea.org/genotypes (for more information : [Bukowski et. al., 2018](https://doi.org/10.1093/gigascience/gix134))
 - SNP data (20 million): ``
 - SNP data (50k SNPs): `largedata/Zhikai/sinfo_micobiome_geno.txt`
 
 
 
 #### Omics data
-- Microbiome (3626 ASVs): log relative abundance (`largedata/Zhikai/sinfo_micobiome_geno.txt`), count (`largedata/Zhikai/sinfo_micobiome_geno_count.txt`) (for more information : [Rodene et. al., 2022](https://doi.org/10.7554/eLife.75790)
+- Microbiome (3626 ASVs): log relative abundance (`largedata/Zhikai/sinfo_micobiome_geno.txt`), count (`largedata/Zhikai/sinfo_micobiome_geno_count.txt`) (for more information : [Meier et. al., 2022](https://doi.org/10.7554/eLife.75790))
   - Sample info: `data/sample_info_3626asvs.txt` 
   - For information about N treatment level of each ceil_id corresponding to two rows with the same genotype
 
 
 #### Phenomics data
 - UAV Phenotype: Canopy Coverage (`data/ppj220030-sup-0002-tables1.csv`), Vegetation Indices (`data/ppj220030-sup-0003-tables2.csv`) 
-  - (for more information: [Rodene et. al., 2022](https://acsess.onlinelibrary.wiley.com/doi/full/10.1002/ppj2.20030)
+  - (for more information: [Rodene et. al., 2022](https://acsess.onlinelibrary.wiley.com/doi/full/10.1002/ppj2.20030))
 
 
 ## Data Processing and Sharing:
