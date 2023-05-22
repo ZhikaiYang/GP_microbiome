@@ -15,6 +15,7 @@
 - Whole genome sequencing data (n=271)
 - SNP data (20 million): ``
 - SNP data (50k SNPs): `largedata/Zhikai/sinfo_micobiome_geno.txt`
+- from HapMap V3.2.1 (with imputation, AGPv4) were obtained from the Panzea database (\url{https://www.panzea.org/genotypes}).
 
 
 #### Omics data
