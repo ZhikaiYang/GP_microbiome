@@ -12,10 +12,10 @@
   - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
 
 #### Genome-sequencing data
-- Whole genome sequencing data (n=271)
+- Whole genome sequencing data (n=271) of HapMap V3.2.1 (with imputation, AGPv4) obtained from the Panzea database https://www.panzea.org/genotypes
 - SNP data (20 million): ``
 - SNP data (50k SNPs): `largedata/Zhikai/sinfo_micobiome_geno.txt`
-- from HapMap V3.2.1 (with imputation, AGPv4) were obtained from the Panzea database (\url{https://www.panzea.org/genotypes}).
+
 
 
 #### Omics data
