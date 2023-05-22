@@ -12,14 +12,14 @@
   - PCs: `data/hmp321_282_agpv4_maf005_miss03_pruned.eigenvec`
 
 #### Genome-sequencing data
-- Whole genome sequencing data (n=271) of HapMap V3.2.1 (with imputation, AGPv4) obtained from the Panzea database https://www.panzea.org/genotypes
+- Whole genome sequencing data (n=271) of HapMap V3.2.1 (with imputation, AGPv4) obtained from the Panzea database https://www.panzea.org/genotypes (for more information : [Bukowski et. al., 2018](https://doi.org/10.1093/gigascience/gix134)
 - SNP data (20 million): ``
 - SNP data (50k SNPs): `largedata/Zhikai/sinfo_micobiome_geno.txt`
 
 
 
 #### Omics data
-- Microbiome (3626 ASVs): log relative abundance (`largedata/Zhikai/sinfo_micobiome_geno.txt`), count (`largedata/Zhikai/sinfo_micobiome_geno_count.txt`) (for more information : Meier et al 2021 https://www.biorxiv.org/content/10.1101/2021.11.01.466815v1.full)
+- Microbiome (3626 ASVs): log relative abundance (`largedata/Zhikai/sinfo_micobiome_geno.txt`), count (`largedata/Zhikai/sinfo_micobiome_geno_count.txt`) (for more information : [Rodene et. al., 2022](https://doi.org/10.7554/eLife.75790)
   - Sample info: `data/sample_info_3626asvs.txt` 
   - For information about N treatment level of each ceil_id corresponding to two rows with the same genotype
 
