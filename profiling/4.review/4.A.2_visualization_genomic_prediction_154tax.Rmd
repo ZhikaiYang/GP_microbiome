@@ -16,7 +16,7 @@ knitr::opts_knit$set(root.dir=normalizePath('../../'))
 
 
 
-#on HCC
+#on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
 
 ```{r}
 library(data.table)
@@ -94,405 +94,14 @@ figure
 
 ```
 
-#add Aug 22, on HCC
+
+
+
+#coef of microbiome, on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
 ```{r}
-f <- list.files(path="largedata/outputs", pattern="Aug22_jyang", full.names = T)
+library(data.table)
 
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-
-id_pc = which(out$method == "rrBLUP_PC_microbiome")
-out = out[-id_pc,]
-fwrite(out[,-7], "largedata/pred_canopy_vis_Aug22_seeds.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-
-
-```
-
-
-#Aug22 added all vegetation indexes visualization 
-```{r}
-pred_canopy = fread("largedata/pred_canopy_dates_seeds.txt", data.table = F)
-pred_vis = fread("largedata/pred_vis_dates_seeds.txt", data.table = F)
-pred_aug22 = fread("largedata/pred_canopy_vis_Aug22_seeds.txt", data.table = F)
-pred_all = rbind(pred_canopy,pred_vis, pred_aug22) 
-
-pred_all_avg =  as.data.frame( pred_all %>% group_by(trait, date, method, seed) %>% summarise_all(mean))
-pred_all_avg = pred_all_avg[-(which(pred_all_avg$date == "July6")),]
-
-pred_all_avg$date <- factor(pred_all_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-
-vis = as.character(data.frame(table(pred_all_avg$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(vis[i]) +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_y_continuous(limits = c(0.4, 0.9)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "top", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-```
-
-#separate HN and LN, on HCC
-```{r}
-f <- list.files(path="largedata/outputs", pattern="_nitrogen_", full.names = T)
-
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$nitrogen = gsub(".*nitrogen_|_jyang.*", "", out$file)
-id_pc = which(out$method == "rrBLUP_PC_microbiome")
-out = out[-id_pc,]
-fwrite(out[,-7], "largedata/pred_seeds_dates_nitrogen_canopy_vis.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-
-
-```
-
-
-#separate HN and LN, all vegetation indexes visualization 
-```{r}
-pred_all_nitrogen = fread("largedata/pred_seeds_dates_nitrogen_canopy_vis.txt", data.table = F)
-
-pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, date, method, seed, nitrogen) %>% summarise_all(mean))
-
-pred_all_nitrogen_avg$date <- factor(pred_all_nitrogen_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-
-vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(paste(vis[i], "HN", sep = "_")) +
-    theme_classic() +
-    labs(fill = "") +
-    scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-```
-
-
-#if shuffled microbiome data will improve prediction accuracy, on HCC
-```{r}
-f <- list.files(path="largedata/outputs", pattern="_shuffled_", full.names = T)
-
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$shuffled = gsub(".*shuffled_|_jyang.*", "", out$file)
-id_pc = which(out$method == "rrBLUP_PC_microbiome")
-out = out[-id_pc,]
-fwrite(out[,-7], "largedata/pred_seeds_dates_shuffled_canopy_vis.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-
-
-```
-
-
-#if shuffled microbiome data will improve prediction accuracy on local
-```{r}
-pred_all_shuffled = fread("largedata/pred_seeds_dates_shuffled_canopy_vis.txt", data.table = F)
-
-pred_all_shuffled_avg =  as.data.frame( pred_all_shuffled %>% group_by(trait, date, method, seed, shuffled) %>% summarise_all(mean))
-
-pred_all_shuffled_avg$method[which(pred_all_shuffled_avg$method == "rrBLUP_geno_microbiome")] = "rrBLUP_geno_shuffled_microbiome"
-
-pred_all_compare = rbind(pred_all_shuffled_avg[,-5], pred_all_avg)
-
-pred_all_compare = pred_all_compare[-(which(pred_all_compare$method=="rrBLUP")),]
-
-
-
-
-##calculate improvement ratio
-
-pred_all_compare_mean = as.data.frame( pred_all_compare %>% group_by(trait, date, method) %>% summarise_all(mean))
-
-pred_all_compare_mean_d = pred_all_compare_mean[seq(1,53,by=2),c(1,2,5)]
-rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
-
-for (i in seq(1,53,by=2)) {
-  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i]-pred_all_compare_mean$accuracy[i+1])/pred_all_compare_mean$accuracy[i+1]
-}
-
-pred_all_compare_mean_d$date <- factor(pred_all_compare_mean_d$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-#colnames(pred_all_compare_mean_d)[3] = "accuracy_increase_percentage"
-
-ggplot(data=pred_all_compare_mean_d, aes(x=trait, y=accuracy, fill=date)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  scale_fill_brewer(palette="Paired")+
-    xlab("") +
-    ylab("Accuracy Improvement") +
-    ggtitle("Prediction Accuracy Improvement Percentage ") +
-    theme_classic() +
-    #labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=fsize-2, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "right", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-
-##############################
-
-
-pred_all_shuffled_avg$date <- factor(pred_all_shuffled_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-
-vis = as.character(data.frame(table(pred_all_shuffled_avg$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(pred_all_shuffled_avg[which((pred_all_shuffled_avg$trait == vis[i]) & (pred_all_shuffled_avg$shuffled == "yes")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-
-pred_all_compare$date <- factor(pred_all_compare$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-
-vis = as.character(data.frame(table(pred_all_compare$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(pred_all_compare[which(pred_all_compare$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "top", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-```
-
-#separate HN and LN + if shuffled microbiome data will improve prediction accuracy, on HCC
-```{r}
-f <- list.files(path="largedata/outputs", pattern="N_shuffled_", full.names = T)
-
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$nitrogen = gsub(".*nitrogen_|_shuffled.*", "", out$file)
-out$shuffled = gsub(".*shuffled_|_jyang.*", "", out$file)
-
-id_pc = which(out$method == "rrBLUP_PC_microbiome")
-out = out[-id_pc,]
-fwrite(out[,-7], "largedata/pred_seeds_dates_nitrogen_canopy_vis_shuffled.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-
-
-```
-
-
-
-#separate HN and LN + if shuffled microbiome data will improve prediction accuracy, all vegetation indexes visualization, on local 
-```{r}
-pred_all_nitrogen_shuffled = fread("largedata/pred_seeds_dates_nitrogen_canopy_vis_shuffled.txt", data.table = F)
-
-pred_all_nitrogen_shuffled_avg =  as.data.frame( pred_all_nitrogen_shuffled %>% group_by(trait, date, method, seed, nitrogen, shuffled) %>% summarise_all(mean))
-
-pred_all_nitrogen_shuffled_avg$date <- factor(pred_all_nitrogen_shuffled_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-pred_all_nitrogen_shuffled_avg$method[which(pred_all_nitrogen_shuffled_avg$method == "rrBLUP_geno_microbiome")] = "rrBLUP_geno_shuffled_microbiome"
-
-
-
-
-vis = as.character(data.frame(table(pred_all_nitrogen_shuffled_avg$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(pred_all_nitrogen_shuffled_avg[which((pred_all_nitrogen_shuffled_avg$trait == vis[i]) & (pred_all_nitrogen_shuffled_avg$nitrogen == "LN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(paste(vis[i], "LN", "Shuffled_Microbiome", sep = "_")) +
-    theme_classic() +
-    labs(fill = "") +
-    scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-
-
-
-pred_all_nitrogen_compare = rbind(pred_all_nitrogen_shuffled_avg[,-6], pred_all_nitrogen_avg)
-
-pred_all_nitrogen_compare = pred_all_nitrogen_compare[-(which(pred_all_nitrogen_compare$method=="rrBLUP")),]
-
-
-vis = as.character(data.frame(table(pred_all_nitrogen_compare$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(pred_all_nitrogen_compare[which((pred_all_nitrogen_compare$trait == vis[i]) & (pred_all_nitrogen_shuffled_avg$nitrogen == "HN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
-    xlab("") +
-    ylab("Prediction Accuracy ") +
-    ggtitle(paste(vis[i], "HN", "Shuffled_Microbiome", sep = "_")) +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-
-```
-
-
-
-
-
-
-
-
-#coef of microbiome, on HCC
-```{r}
-f <- list.files(path="largedata/outputs", pattern="coef_mic_trait", full.names = T)
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait", full.names = T)
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -507,7 +116,7 @@ out = out[,-3]
 
 
 
-fwrite(out, "largedata/coef_mic_all_traits_dates.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -516,7 +125,7 @@ fwrite(out, "largedata/coef_mic_all_traits_dates.txt", sep = "\t", quote = F, ro
 #coef of microbiome spread
 ```{r}
 
-coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
+coef_all = fread("largedata/review/coef_mic_all_traits_dates_154tax.txt", data.table = F)
 
 
 coef_all$date <- factor(coef_all$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
@@ -526,7 +135,7 @@ vis = as.character(data.frame(table(coef_all$trait))$Var1)
 
 plist = list()
 
-for (i in 1:9) {
+for (i in 1:8) {
     plist[[i]] = ggboxplot(coef_all[which((coef_all$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
     #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
     xlab("") +
@@ -548,7 +157,7 @@ for (i in 1:9) {
 
 
 library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]], ncol = 2, nrow = 4)
 figure
 
 ```
