@@ -162,59 +162,313 @@ figure
 
 ```
 
-#top abs_scaled asvs
-```{r}
-coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
-coef_vis = coef_all[-which(coef_all$trait == "Canopy_Coverage"),]
-rownames(coef_vis) = 1:nrow(coef_vis)
-vis = as.character(data.frame(table(coef_vis$trait))$Var1)
-date = as.character(data.frame(table(coef_vis$date))$Var1)
-#coef_ExG = coef_all[which(coef_all$trait == "ExG"),]
-#id_top = which(coef_ExG$abs_coef >= 0.001)
-#coef_all_top = coef_all[id_top,]
 
-coef_vis_mean =  as.data.frame( coef_vis[,-1] %>% group_by(trait, date) %>% summarise_all(mean))
-coef_vis_var =  as.data.frame( coef_vis[,-1] %>% group_by(trait, date) %>% summarise_all(var))
-coef_vis_scaled = as.data.frame( coef_vis[,-1] %>% group_by(trait, date) %>% summarise_all(scale))
-coef_vis_scaled$asv = coef_vis$asv
-coef_vis_scaled_var = as.data.frame( coef_vis_scaled[,-4] %>% group_by(trait, date) %>% summarise_all(var))
-coef_vis_scaled$abs_scaled_coef = abs(coef_vis_scaled$coef)
-coef_vis_scaled_asv_rank = as.data.frame( coef_vis_scaled[,4:5] %>% group_by(asv) %>% summarise_all(sum))
-coef_vis_scaled_asv_rank$rank = rank(coef_vis_scaled_asv_rank$abs_scaled_coef)
-coef_vis_scaled_asv_rank = coef_vis_scaled_asv_rank[order(-coef_vis_scaled_asv_rank$abs_scaled_coef),]
-coef_vis_scaled_asv_rank$rank = 1:nrow(coef_vis_scaled_asv_rank)
+
+#separate HN and LN, on HCC
+```{r}
+library(data.table)
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="prediction_accuracy_seed.*_nitrogen_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$nitrogen = gsub(".*nitrogen_|_shuffled.*", "", out$file)
+out$shuffled  <- gsub(".*shuffled_|_jyang.*", "", out$file)
+
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
 
 ```
 
-#top #of traits asvs
-```{r}
-coef_ExG_Aug12 = coef_vis[which((coef_vis$trait == "ExG")  & (coef_vis$date == "Aug12")),]
-#coef_ExG_Aug12$scoef = scale(coef_ExG_Aug12$coef)
-coef_ExG_Aug12$abs_coef = abs(coef_ExG_Aug12$coef)
-coef_ExG_Aug12 = coef_ExG_Aug12[order(-coef_ExG_Aug12$abs_coef),]
-coef_ExG_Aug12$rank = 1:nrow(coef_ExG_Aug12)
-coef_ExG_Aug12$top1p = ifelse(coef_ExG_Aug12$rank <= 36, 1, 0)
 
+#separate HN and LN, all vegetation indexes visualization 
+```{r}
+pred_all_nitrogen = fread("largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax.txt", data.table = F)
+
+pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, date, method, seed, nitrogen, shuffled) %>% summarise_all(mean))
+
+pred_all_nitrogen_avg$date <- factor(pred_all_nitrogen_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+pred_all_nitrogen_avg = pred_all_nitrogen_avg[-which((pred_all_nitrogen_avg$method == "rrBLUP") & (pred_all_nitrogen_avg$shuffled == "yes")),]
+
+pred_all_nitrogen_avg$method[which((pred_all_nitrogen_avg$method == "rrBLUP_geno_microbiome") & (pred_all_nitrogen_avg$shuffled == "yes"))] = "rrBLUP_geno_shuffled_microbiome"
+
+
+
+pred_all_nitrogen_avg$method <- factor(pred_all_nitrogen_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV by sample names"))
+
+
+
+vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
+
+i=6
+
+my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"))
+
+
+p_vari_shuffled_hn = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    #stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle("HN") +
+    theme_classic() +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "LN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    #stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle("LN") +
+    theme_classic() +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_n_c <- ggarrange(p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 2, nrow = 1)
+p_vari_n_c
+
+
+
+pdf("largedata/p_vari_n_c.pdf", width = 10, height= 6)
+p_vari_n_c
+dev.off()
+
+
+p_vari_shuffled_hn_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_hn_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_hn_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+p_vari_shuffled_ln_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+
+```
+
+
+
+
+#coef of microbiome, on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
+```{r}
+library(data.table)
+
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+out = out[,-3]
+
+
+
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+#coef of microbiome, on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
+```{r}
+library(data.table)
+
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait.*_nitrogen_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_nitrogen.*", "", out$file)
+out$nitrogen = gsub(".*nitrogen_|_jyang.*", "", out$file)
+
+out = out[,-3]
+
+
+
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+
+#top abs_scaled asvs
+```{r}
+coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", data.table = F)
+
+coef_vis_hn = coef_vis[which(coef_vis$nitrogen == "HN"),]
 out <- data.frame()
 for(i in 1:length(vis)){
   for (j in 1:length(date)) {
-    tem <- coef_vis[which((coef_vis$trait == vis[i])  & (coef_vis$date == date[j])),]
+    tem <- coef_vis_hn[which((coef_vis_hn$trait == vis[i])  & (coef_vis_hn$date == date[j])),]
     tem$abs_coef = abs(tem$coef)
     tem = tem[order(-tem$abs_coef),]
     tem$rank = 1:nrow(tem)
-    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top1p = ifelse(tem$rank <= 15, 1, 0)
     tem$top100 = ifelse(tem$rank <= 100, 1, 0)
     out <- rbind(out, tem)
   }
 }
 
-asv_coef_vis = as.data.frame(out[,-(3:4)] %>% group_by(asv) %>% summarise_all(sum))
-asv_date_coef_vis = as.data.frame(out[,-3] %>% group_by(date,asv) %>% summarise_all(sum))
-#asv_date_coef_vis = asv_date_coef_vis[which(asv_date_coef_vis$top100 > 0),]
-asv_date_coef_vis$top1p = as.character(asv_date_coef_vis$top1p)
-asv_date_coef_vis$top100 = as.character(asv_date_coef_vis$top100)
-asv_date_coef_vis$count = 1
-date_ntrait_count_top1p = as.data.frame(asv_date_coef_vis[,c(1,6,8)] %>% group_by(date,top1p) %>% summarise_all(sum))
+asv_coef_vis_hn = as.data.frame(out[,-(3:5)] %>% group_by(asv) %>% summarise_all(sum))
+asv_date_coef_vis_hn = as.data.frame(out[,-c(3,5)] %>% group_by(date,asv) %>% summarise_all(sum))
+
+
+
+
+coef_vis_ln = coef_vis[which(coef_vis$nitrogen == "LN"),]
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_vis_ln[which((coef_vis_ln$trait == vis[i])  & (coef_vis_ln$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 15, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+asv_coef_vis_ln = as.data.frame(out[,-(3:5)] %>% group_by(asv) %>% summarise_all(sum))
+asv_date_coef_vis_ln = as.data.frame(out[,-c(3,5)] %>% group_by(date,asv) %>% summarise_all(sum))
+
+
+
+#asv_date_coef_vis_ln = asv_date_coef_vis_ln[which(asv_date_coef_vis_ln$top100 > 0),]
+asv_date_coef_vis_ln$top1p = as.character(asv_date_coef_vis_ln$top1p)
+asv_date_coef_vis_ln$top100 = as.character(asv_date_coef_vis_ln$top100)
+asv_date_coef_vis_ln$count = 1
+date_ntrait_count_top1p = as.data.frame(asv_date_coef_vis_ln[,c(1,6,8)] %>% group_by(date,top1p) %>% summarise_all(sum))
 date_ntrait_count_top1p$date <- factor(date_ntrait_count_top1p$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
 
 p_date_ntrait_count_top1p = ggplot(date_ntrait_count_top1p[-which(date_ntrait_count_top1p$top1p == "0"),], aes(x=date, y=count, fill=top1p)) +
@@ -238,7 +492,7 @@ p_date_ntrait_count_top1p = ggplot(date_ntrait_count_top1p[-which(date_ntrait_co
 p_date_ntrait_count_top1p
 
 
-date_asv_top1 = asv_date_coef_vis[,c(1,2,6)]
+date_asv_top1 = asv_date_coef_vis_ln[,c(1,2,6)]
 asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
 asv_mic_group = asv_mic_group[,c(1,8)]
 date_asv_mic_group_top1 = merge(date_asv_top1, asv_mic_group, by.x = "asv", by.y = "ASV")
