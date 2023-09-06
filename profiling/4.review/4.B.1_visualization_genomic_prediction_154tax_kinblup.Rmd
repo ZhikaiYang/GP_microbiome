@@ -241,7 +241,7 @@ figure
 #separate HN and LN, on HCC
 ```{r}
 library(data.table)
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="prediction_accuracy_seed.*_nitrogen_", full.names = T)
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="prediction_accuracy_seed.*_nitrogen_.*_kinblup", full.names = T)
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -252,11 +252,9 @@ for(i in 1:length(f)){
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
 out$nitrogen = gsub(".*nitrogen_|_shuffled.*", "", out$file)
-out$shuffled  <- gsub(".*shuffled_|_jyang.*", "", out$file)
+out$shuffled  <- gsub(".*shuffled_|_kinblup.*", "", out$file)
 
-id_pc = which(out$method == "rrBLUP_PC_microbiome")
-out = out[-id_pc,]
-fwrite(out[,-7], "largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out[,-7], "largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax_kinblup.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -265,7 +263,7 @@ fwrite(out[,-7], "largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax
 
 #separate HN and LN, all vegetation indexes visualization 
 ```{r}
-pred_all_nitrogen = fread("largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax.txt", data.table = F)
+pred_all_nitrogen = fread("largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax_kinblup.txt", data.table = F)
 
 pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, date, method, seed, nitrogen, shuffled) %>% summarise_all(mean))
 
@@ -336,16 +334,16 @@ p_vari_shuffled_hn_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
     ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
     #scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -353,16 +351,16 @@ p_vari_shuffled_hn_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
     ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    ggtitle(paste(vis[i], "Aug-22", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
     #scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -370,16 +368,16 @@ p_vari_shuffled_hn_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrog
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
     ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    ggtitle(paste(vis[i], "Sep-5", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
     #scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          strip.text.x = element_blank(),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -388,16 +386,16 @@ p_vari_shuffled_ln_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
     ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
     #scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -405,16 +403,16 @@ p_vari_shuffled_ln_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
     ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    ggtitle(paste(vis[i], "Aug-22", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
     #scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
@@ -422,19 +420,24 @@ p_vari_shuffled_ln_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrog
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
     ylab("Prediction Accuracy ") +
-    #ggtitle(paste(vis[i], "Shuffled_Microbiome", sep = "_")) +
+    ggtitle(paste(vis[i], "Sep-5", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
     #scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "bottom", 
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
+p_vari_hn_c <- ggarrange(p_vari_shuffled_hn_aug12, p_vari_shuffled_hn_aug22, p_vari_shuffled_hn_sep5, ncol = 1, nrow = 3)
+p_vari_hn_c
+
+p_vari_ln_c <- ggarrange(p_vari_shuffled_ln_aug12, p_vari_shuffled_ln_aug22, p_vari_shuffled_ln_sep5, ncol = 1, nrow = 3)
+p_vari_ln_c
 
 
 ```
