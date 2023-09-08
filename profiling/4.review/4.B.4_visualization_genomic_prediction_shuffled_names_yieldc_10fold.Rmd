@@ -1,0 +1,947 @@
+---
+title: "Genomic Selection practice"
+author: "Zhikai Yang"
+date: "Sept 9th, 2022"
+output: NULL
+---
+
+
+## Normalize the path:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+knitr::opts_knit$set(root.dir=normalizePath('../../')) 
+```
+
+
+#on HCC
+
+```{r}
+library(data.table)
+
+
+f <- list.files(path="largedata/review/output_yieldc", pattern="prediction_accuracy_seed", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+colnames(out)[2] = "trait"
+out$shuffled  <- gsub(".*shuffled_|_jyang.*", "", out$file)
+
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/review/pred_seeds_yieldc_shuffled_sample_names.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+```{r}
+library(data.table)
+library(ggplot2)
+library(agricolae)
+library(ggpubr)
+library(dplyr)
+
+pred_yieldc = fread("largedata/review/pred_seeds_yieldc_shuffled_sample_names.txt", data.table = F)
+
+pred_yieldc_avg =  as.data.frame( pred_yieldc %>% group_by(trait, method, seed, shuffled) %>% summarise_all(mean))
+
+pred_yieldc_avg = pred_yieldc_avg[-which((pred_yieldc_avg$method == "rrBLUP") & (pred_yieldc_avg$shuffled == "yes")),]
+
+pred_yieldc_avg$method[which((pred_yieldc_avg$method == "rrBLUP_geno_microbiome") & (pred_yieldc_avg$shuffled == "yes"))] = "rrBLUP_geno_shuffled_microbiome"
+
+
+
+pred_yieldc_avg$method <- factor(pred_yieldc_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV by sample names"))
+
+
+
+
+
+yieldc = as.character(data.frame(table(pred_yieldc_avg$trait))$Var1)
+
+fsize = 18
+i = 4
+
+my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"))
+
+compare_means(accuracy ~ method, pred_yieldc_avg[which( (pred_yieldc_avg$trait == yieldc[i])),], method = "t.test", paired = F)
+
+p_w20_shuffled = ggboxplot(pred_yieldc_avg[which((pred_yieldc_avg$trait == yieldc[i]) ),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(yieldc[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+plist = list()
+
+fsize = 16
+
+for (i in 1:4) {
+    plist[[i]] = ggboxplot(pred_yieldc_avg[which(pred_yieldc_avg$trait == yieldc[i]),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(yieldc[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x=element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]], ncol = 2, nrow = 2)
+figure
+
+```
+
+
+#separate HN and LN, on HCC
+```{r}
+library(data.table)
+f <- list.files(path="largedata/review/output_yieldc", pattern="prediction_accuracy_10fold_seed_.*_nitrogen_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$nitrogen = gsub(".*nitrogen_|_shuffled.*", "", out$file)
+out$shuffled  <- gsub(".*shuffled_|_jyang.*", "", out$file)
+
+id_pc = which(out$method == "rrBLUP_PC_microbiome")
+out = out[-id_pc,]
+fwrite(out[,-7], "largedata/review/pred_seeds_nitrogen_yieldc_10fold.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+
+
+```
+
+
+#separate HN and LN, all vegetation indexes visualization 
+```{r}
+pred_all_nitrogen = fread("largedata/review/pred_seeds_nitrogen_yieldc_10fold.txt", data.table = F)
+colnames(pred_all_nitrogen)[2] = "trait"
+pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, method, seed, nitrogen, shuffled) %>% summarise_all(mean))
+
+pred_all_nitrogen_avg = pred_all_nitrogen_avg[-which((pred_all_nitrogen_avg$method == "rrBLUP") & (pred_all_nitrogen_avg$shuffled == "yes")),]
+
+pred_all_nitrogen_avg$method[which((pred_all_nitrogen_avg$method == "rrBLUP_geno_microbiome") & (pred_all_nitrogen_avg$shuffled == "yes"))] = "rrBLUP_geno_shuffled_microbiome"
+
+
+
+pred_all_nitrogen_avg$method <- factor(pred_all_nitrogen_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV by sample names"))
+
+
+
+vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
+
+i=2
+
+my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"))
+
+
+p_vari_shuffled_hn = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste("HN",vis[i],sep="_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "LN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste("LN",vis[i],sep="_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_n_c <- ggarrange(p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 2, nrow = 1)
+p_vari_n_c
+
+
+
+pdf("largedata/p_vari_n_c.pdf", width = 10, height= 6)
+p_vari_n_c
+dev.off()
+
+
+
+```
+
+#LN
+```{r}
+vari_ln = subset(pred_all_nitrogen_compare, trait == "VARI" & nitrogen == "LN")
+
+vari_ln_avg = as.data.frame(vari_ln %>% group_by(date, method, trait, nitrogen) %>% summarise_all(mean))
+```
+
+
+#coef of microbiome spread
+```{r}
+
+coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
+
+
+coef_all$date <- factor(coef_all$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(coef_all$trait))$Var1)
+
+i = 7
+
+fsize = 18
+
+p_vari_coef_mic = ggboxplot(coef_all[which((coef_all$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
+    xlab("") +
+    ylab("Coef of ASVs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+library(ggplot2)
+library(dplyr)
+library(hrbrthemes)
+library(viridis)
+
+p_vari_coef_mic = ggplot(coef_all[which((coef_all$trait == vis[i])),], aes(x=date, y=coef, fill=date)) +
+    #geom_violin(width=1.2) +
+    geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    xlab("") +
+    ylab("Coef of ASVs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+
+highlight1 = coef_all[which((coef_all$trait == vis[i]) & (coef_all$asv %in% c("asv_000278"))),]
+highlight2 = coef_all[which((coef_all$trait == vis[i]) & (coef_all$asv %in% c( "asv_000183"))),]
+highlight = coef_all[which((coef_all$trait == vis[i]) & (coef_all$asv %in% c("asv_000278", "asv_000183"))),]
+
+p_vari_coef_mic_highlight = ggboxplot(coef_all[which((coef_all$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
+    geom_point(data=highlight1, aes(x=date,y=coef),color= "red", size=3)+
+    geom_point(data=highlight2, aes(x=date,y=coef),color= "green", size=3)+  #"#7CA100"
+    xlab("") +
+    ylab("Coef of ASVs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+
+ 
+
+```
+
+#coef of snps
+```{r}
+
+coef_all_snps = fread("largedata/coef_snps_all_traits_dates.txt", data.table = F)
+
+coef_all_snps$date <- factor(coef_all_snps$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(coef_all_snps$trait))$Var1)
+
+p_vari_coef_snp = ggboxplot(coef_all_snps[sort(sample(which((coef_all_snps$trait == vis[i])), 15000)),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
+    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+    xlab("") +
+    ylab("Coef of SNPs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_coef_snp = ggplot(coef_all_snps[which((coef_all_snps$trait == vis[i])),], aes(x=date, y=coef, fill=date)) +
+    geom_violin(width=0.9) +
+    geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    xlab("") +
+    ylab("Coef of SNPs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+
+p_vari_coef <- ggarrange(p_vari_coef_mic, p_vari_coef_snp, ncol = 2, nrow = 1)
+
+
+
+
+pdf("largedata/p_vari_coef_mic_snps_sub.pdf", width = 10, height=6)
+p_vari_coef
+dev.off()
+
+
+```
+
+
+
+
+# R2 of different sources
+```{r}
+f <- list.files(path="largedata/outputs", pattern="r2_d_nitrogen_rrblup_geno_microbiome_trait", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+
+out = out[,-4]
+fwrite(out, "largedata/r2_d_nitrogen_rrblup_geno_microbiome_traits.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+```
+
+
+
+# visualization of R2 of different sources
+```{r}
+r2_d_rrblup_geno_microbiome = fread("largedata/r2_d_nitrogen_rrblup_geno_microbiome_traits.txt", data.table = F)
+
+r2_d_rrblup_geno_microbiome = r2_d_rrblup_geno_microbiome[which(r2_d_rrblup_geno_microbiome$source %in% c("nitrogen", "genome", "microbiome")),]
+
+fsize =16
+
+
+r2_d_rrblup_geno_microbiome$source <- factor(r2_d_rrblup_geno_microbiome$source, levels = c("nitrogen", "genome", "microbiome"), labels =c("nitrogen", "genome", "microbiome"))
+
+r2_d_rrblup_geno_microbiome$date <- factor(r2_d_rrblup_geno_microbiome$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+vis = as.character(data.frame(table(r2_d_rrblup_geno_microbiome$trait))$Var1)
+
+plist = list()
+
+for (i in 1:9) {
+    plist[[i]] = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[i])),], aes(x=date, y=r2, fill=source)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Paired")+
+    xlab("") +
+    ylab("Variance Explained") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
+figure
+
+p_vari_var_part = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[6])),], aes(x=date, y=r2, fill=source)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  scale_fill_brewer(palette="Paired")+
+    xlab("Days after microbiome sampling") +
+    ylab("Variance Explained") +
+    ggtitle(vis[6]) +
+    theme_classic() +
+    #labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=14, face="bold"),
+          strip.text.x = element_text(size = 14, face = "bold"),
+          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "right", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+pdf("largedata/p_vari_var_partition.pdf", width = 6, height= 6)
+p_vari_var_part
+dev.off()
+
+
+
+```
+
+
+#top abs_scaled asvs
+
+```{r}
+coef_all = fread("largedata/coef_mic_all_traits_dates.txt", data.table = F)
+coef_vis = coef_all[-which(coef_all$trait == "Canopy_Coverage"),]
+rownames(coef_vis) = 1:nrow(coef_vis)
+vis = as.character(data.frame(table(coef_vis$trait))$Var1)
+date = as.character(data.frame(table(coef_vis$date))$Var1)
+
+
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_vis[which((coef_vis$trait == vis[i])  & (coef_vis$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+asv_coef_vari = out[which(out$trait == "VARI"),]
+asv_coef_vari = asv_coef_vari[which(asv_coef_vari$top1p == 1),]
+row.names(asv_coef_vari) = 1:nrow(asv_coef_vari)
+intersect(intersect(asv_coef_vari$asv[1:36], asv_coef_vari$asv[37:72]),asv_coef_vari$asv[73:108])
+
+asv_coef_vis = as.data.frame(out[,-(3:4)] %>% group_by(asv) %>% summarise_all(sum))
+asv_date_coef_vis = as.data.frame(out[,-3] %>% group_by(date,asv) %>% summarise_all(sum))
+#asv_date_coef_vis = asv_date_coef_vis[which(asv_date_coef_vis$top100 > 0),]
+asv_date_coef_vis$top1p = as.character(asv_date_coef_vis$top1p)
+asv_date_coef_vis$top100 = as.character(asv_date_coef_vis$top100)
+asv_date_coef_vis$count = 1
+date_ntrait_count_top1p = as.data.frame(asv_date_coef_vis[,c(1,6,8)] %>% group_by(date,top1p) %>% summarise_all(sum))
+date_ntrait_count_top1p$date <- factor(date_ntrait_count_top1p$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+
+
+date_asv_top1 = asv_date_coef_vis[,c(1,2,6)]
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+date_asv_mic_group_top1 = merge(date_asv_top1, asv_mic_group, by.x = "asv", by.y = "ASV")
+mic_group_anno = fread("largedata/elife-75790-supp3-v2.csv", data.table = F)
+
+count_mic_g = as.data.frame(table(date_asv_mic_group_top1$Functional_Tax_Group))
+count_mic_g$Var1[which(!(count_mic_g$Var1 %in% unique(mic_group_anno$Microbial_Group)))]
+
+
+
+top_asv_coef_vari_group = merge(asv_mic_group, asv_coef_vari,  by.x = "ASV", by.y = "asv")
+
+fwrite(top_asv_coef_vari_group[,-ncol(top_asv_coef_vari_group)], "data/supplementary/Supplemental_Table_S1_top_one_percent_asvs.txt", sep="\t", row.names = F, quote = F)
+```
+
+
+
+### mediation analysis
+
+```{r}
+library(data.table)
+f <- list.files(path="largedata/med_output", pattern="mediators_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- read.csv(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+
+out$method  <- gsub(".*mediators_|_trait.*", "", out$file)
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.csv", "", out$file)
+
+fwrite(out[,-7],"largedata/mediators_asvs.txt", sep="\t", row.names = F, quote = F)
+
+
+```
+
+# including non-sig mediators
+```{r}
+mediators_asvs = fread("largedata/mediators_asvs.txt")
+mediators_asvs = mediators_asvs[-which(mediators_asvs$trait == "Canopy_Coverage"),]
+
+mediators_asvs_count_all = as.data.frame(table(mediators_asvs$id))
+
+mediators_asvs_count_all = mediators_asvs_count_all[order(mediators_asvs_count_all$Freq, decreasing = T),]
+rownames(mediators_asvs_count_all) = 1:nrow(mediators_asvs_count_all)
+
+id_mediator_top1 = which(mediators_asvs_count_all$Var1 %in% unique(date_asv_mic_group_top1$asv[which(date_asv_mic_group_top1$top1p >0)]))
+
+mediators_asvs_count_all_group = merge(mediators_asvs_count_all, asv_mic_group, by.x = "Var1", by.y = "ASV")
+
+
+```
+
+# just sig mediators after multiple comparison adjustment
+```{r}
+mediators_asvs = fread("largedata/mediators_asvs.txt")
+mediators_asvs = mediators_asvs[-which(mediators_asvs$trait == "Canopy_Coverage"),]
+
+mediators_asvs_sig = mediators_asvs[which(mediators_asvs$padj<=0.05),]
+
+mediators_asvs_count_sig = as.data.frame(table(mediators_asvs_sig$id))
+
+
+
+mediators_asvs_count_sig = mediators_asvs_count_sig[order(mediators_asvs_count_sig$Freq, decreasing = T),]
+rownames(mediators_asvs_count_sig) = 1:nrow(mediators_asvs_count_sig)
+
+id_mediator_top1 = which(mediators_asvs_count_sig$Var1 %in% unique(date_asv_mic_group_top1$asv[which(date_asv_mic_group_top1$top1p >0)]))
+
+mediators_asvs_count_sig_group = merge(mediators_asvs_count_sig, asv_mic_group, by.x = "Var1", by.y = "ASV")
+
+
+mediators_asvs_sig_group = merge(asv_mic_group, mediators_asvs_sig,  by.x = "ASV", by.y = "id")
+
+fwrite(mediators_asvs_sig_group[which(mediators_asvs_sig_group$method %in% c("fixed_bic", "fixed_eq")),], "data/supplementary/Supplemental_Table_S2_mediator_asvs.txt", sep="\t", row.names = F, quote = F)
+```
+
+
+
+#isnps
+```{r}
+library(data.table)
+f <- list.files(path="largedata/med_output", pattern="isnps_", full.names = T)
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- read.csv(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+
+out$method  <- gsub(".*isnps_|_trait.*", "", out$file)
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_jyang.csv", "", out$file)
+
+fwrite(out[,-4],"largedata/isnps_asvs.txt", sep="\t", row.names = F, quote = F)
+
+
+```
+
+```{r}
+isnps_asvs = fread("largedata/isnps_asvs.txt")
+isnps_asvs$sig_id = paste(isnps_asvs$medi, isnps_asvs$method, isnps_asvs$trait, isnps_asvs$date, sep = "_")
+
+mediators_asvs_sig$sig_id = paste(mediators_asvs_sig$id, mediators_asvs_sig$method, mediators_asvs_sig$trait, mediators_asvs_sig$date, sep = "_")
+
+isnps_asvs = isnps_asvs[which(isnps_asvs$sig_id %in% mediators_asvs_sig$sig_id),]
+
+fwrite(isnps_asvs, "largedata/isnps_asvs.txt", sep="\t", row.names = F, quote = F)
+
+isnps_asvs_vari = isnps_asvs[which(isnps_asvs$trait == "VARI"),]
+
+```
+
+#on hcc
+```{r}
+library(data.table)
+library(dplyr)
+library(tidyr)
+
+sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header = T, data.table = F)
+
+
+id_asv_isnp = which(colnames(sinfo_microbiome_geno) %in% c(unique(isnps_asvs$medi),unique(isnps_asvs$snps_for_medi)))
+
+sinfo_asv_isnp = sinfo_microbiome_geno[,c(1:6,3633,id_asv_isnp)] # genotype (column 3633)
+fwrite(sinfo_asv_isnp,"largedata/sinfo_asv_isnp.txt", sep="\t", row.names = F, quote = F)
+
+```
+
+```{r}
+sinfo_asv_isnp = fread("largedata/sinfo_asv_isnp.txt")
+vis = fread("data/ppj220030-sup-0003-tables2.csv",header = T, data.table = F)
+
+# vegetation indexes from column 7 to 14
+id_trait = 12
+# spread the combined data for trait "canopy coverage" with measurements from date 6-July to 5-Sep
+vis_canopy = vis[,c(1:6,id_trait)]
+table(vis_canopy$date)
+vis_canopy = spread(vis_canopy, key = "date", value = colnames(vis)[id_trait]) 
+
+# ceil_id : used for merging with corresponding phenotype
+vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_")
+vis_canopy = vis_canopy[,c(18, 14, 6:13, 15:17)]
+vis_canopy = vis_canopy[,c(1,3,7,13)]
+sinfo_pheno_asv_isnp = merge(vis_canopy, sinfo_asv_isnp, by.x = "ceil_id", by.y = "ceil_id")
+
+
+
+id_02 = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN","LN"))) 
+pall <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02], y=sinfo_pheno_asv_isnp$asv_000143[id_02], fill=as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02])) + 
+  geom_violin(trim=FALSE) +
+  stat_compare_means(aes(group = as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02]), label = "p.signif", method = "wilcox.test") +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "bottom",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+pall
+
+psn <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$nitrogen[id_02], y=sinfo_pheno_asv_isnp$asv_000143[id_02], fill=as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02])) + 
+  geom_violin(trim=FALSE) +
+  stat_compare_means(aes(group = as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02]), label = "p.signif", method = "wilcox.test") +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+sinfo_pheno_asv_isnp$`1-240925424` = as.character(sinfo_pheno_asv_isnp$`1-240925424`)
+psn = ggboxplot(sinfo_pheno_asv_isnp[id_02,], x = "nitrogen", y = "asv_000143", color = "1-240925424", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02]), label = "p.signif", method = "wilcox.test") +
+    xlab("") +
+    ylab("log (relative abundance) ") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+psn
+
+
+pall_s <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "bottom",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+pall_s
+
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02], sinfo_pheno_asv_isnp$Aug12[id_02], method = "spearman")
+
+
+
+
+psn_s_aug12 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_aug12
+
+psn_s_aug22 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug22[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_aug22
+
+psn_s_sep5 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Sept5[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_sep5
+
+
+id_02_hn = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN")))
+
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Aug12[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Aug22[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Sept5[id_02_hn], method = "spearman")
+
+
+id_02_ln = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("LN")))
+
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Aug12[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Aug22[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Sept5[id_02_ln], method = "spearman")
+
+
+pdf("largedata/asv_N_std.pdf", width = 5, height= 5)
+psn
+dev.off()
+
+
+pdf("largedata/cor_vis_aug12_asv.pdf", width = 8, height= 5)
+psn_s_aug12
+dev.off()
+
+figure <- ggarrange(psn, psn_s_aug12,psn_s_aug22,psn_s_sep5, ncol = 2, nrow = 2)
+figure
+
+pdf("largedata/asv_N_and_cor_vis_asv.pdf", width = 16, height= 10)
+figure
+dev.off()
+
+
+sinfo_pheno = gather(sinfo_pheno_asv_isnp, key = "date", value = "vari", 2:4)
+
+id_02_hn = which((as.character(sinfo_pheno$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno$nitrogen %in% c("HN"))) 
+
+psn_s_hn <- ggplot(sinfo_pheno[id_02_hn,], aes(x=sinfo_pheno$asv_000143[id_02_hn], y=sinfo_pheno$vari[id_02_hn], color=sinfo_pheno$date[id_02_hn])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_hn
+psn_s_hn + scale_color_brewer(palette="Paired") 
+
+pdf("largedata/cor_vis_dates_asv_hn_color.pdf", width = 8, height= 5)
+psn_s_hn 
+dev.off()
+
+
+id_02_ln = which((as.character(sinfo_pheno$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno$nitrogen %in% c("LN"))) 
+
+psn_s_ln <- ggplot(sinfo_pheno[id_02_ln,], aes(x=sinfo_pheno$asv_000143[id_02_ln], y=sinfo_pheno$vari[id_02_ln], color=sinfo_pheno$date[id_02_ln])) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "none",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+psn_s_ln
+
+figure2 <- ggarrange( psn_s_hn,psn_s_ln, ncol = 1, nrow = 2)
+figure2
+figure = ggarrange(psn, figure2, ncol = 2, nrow = 1)
+
+pdf("largedata/asv_N_and_cor_vis_dates_asv.pdf", width = 10, height= 6)
+figure
+dev.off()
+
+```
+
+#hcc
+#The master FPM file
+```{r}
+# /common/jyanglab/shared/dbcenter/Kremling_Nature3RNASeq282_March2018/Expression_matrix/df_STAR_HTSeq_counts_B73_match_based_on_genet_dist_DESeq2_normed_fpm_rounded_origNames_and_Altnames.txt
+library("data.table")
+rna <- fread("/common/jyanglab/shared/dbcenter/Kremling_Nature3RNASeq282_March2018/Expression_matrix/df_STAR_HTSeq_counts_B73_match_based_on_genet_dist_DESeq2_normed_fpm_rounded_origNames_and_Altnames.txt", header=TRUE, data.table=FALSE)
+# 1960 37136
+
+### select the top 4 with Freq >2
+
+myr <- rna[, c(1:9, which(names(rna) == "GRMZM2G124434"))]
+
+write.table(myr, "largedata/gme1.txt", sep="\t", row.names = FALSE, quote=FALSE)
+```
+
+#on local
+```{r}
+id_02 = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN","LN"))) 
+geno_snp =  sinfo_pheno_asv_isnp[id_02, which(colnames(sinfo_pheno_asv_isnp) %in%  c("genotype","1-240925424"))]
+geno_snp = geno_snp[!duplicated(geno_snp$genotype),]
+myr = fread("largedata/gme1.txt",header = T, data.table = F)
+
+gme1 = merge(myr[,c(2,3,7,10)], geno_snp , by.x = "RawPhenotypeNames", by.y = "genotype")
+gme1$`1-240925424` = as.character(gme1$`1-240925424`)
+
+p_gme1 <- ggplot(gme1, aes(x=TissueWODate, y=GRMZM2G124434, fill=`1-240925424`)) + 
+  geom_violin(trim=FALSE) +
+  stat_compare_means(aes(group = `1-240925424`), label = "p.signif", method = "wilcox.test") +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "bottom",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+p_gme1
+
+```
+
