@@ -30,6 +30,138 @@ library(dplyr)
 
 ```{r}
 library(data.table)
+f <- list.files(path="largedata/review/med_output", pattern="mediators_.*3626asvs_spb_jyang", full.names = T)
+
+fn <- list.files(path="largedata/review/med_output", pattern="mediators_.*_nitrogen.*3626asvs_spb_jyang", full.names = T)
+
+f = f[-which(f %in% fn)]
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+
+out$method  <- gsub(".*mediators_|_trait.*", "", out$file)
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_3626asvs.*", "", out$file)
+
+fwrite(out[,-7],"largedata/review/mediators_asvs_overall_3626asvs_spb.txt", sep="\t", row.names = F, quote = F)
+
+
+```
+
+
+
+```{r}
+library(data.table)
+
+f <- list.files(path="largedata/review/med_output", pattern="mediators_.*_nitrogen.*3626asvs_spb_jyang", full.names = T)
+
+
+out <- data.frame()
+for(i in 1:length(f)){
+  tem <- fread(f[i], header=TRUE)
+  tem$file <- f[i]
+  out <- rbind(out, tem)
+}
+
+
+out$method  <- gsub(".*mediators_|_trait.*", "", out$file)
+out$trait  <- gsub(".*trait_|_date.*", "", out$file)
+out$date  <- gsub(".*date_|_nitrogen.*", "", out$file)
+out$nitrogen = gsub(".*nitrogen_|_3626asvs.*","", out$file)
+
+fwrite(out[,-7],"largedata/review/mediators_asvs_nitrogen_3626asvs_spb.txt", sep="\t", row.names = F, quote = F)
+
+
+```
+
+# overall
+# including non-sig mediators
+```{r}
+mediators_asvs = fread("largedata/review/mediators_asvs_overall_3626asvs_spb.txt")
+
+
+mediators_asvs_count_all = as.data.frame(table(mediators_asvs$id))
+
+mediators_asvs_count_all = mediators_asvs_count_all[order(mediators_asvs_count_all$Freq, decreasing = T),]
+rownames(mediators_asvs_count_all) = 1:nrow(mediators_asvs_count_all)
+
+id_mediator_top1 = which(mediators_asvs_count_all$Var1 %in% unique(date_asv_mic_group_top1$asv[which(date_asv_mic_group_top1$top1p >0)]))
+
+mediators_asvs_count_all_group = merge(mediators_asvs_count_all, asv_mic_group, by.x = "Var1", by.y = "ASV")
+
+
+```
+
+# just sig mediators after multiple comparison adjustment
+```{r}
+mediators_asvs = fread("largedata/review/mediators_asvs_overall_3626asvs_spb.txt")
+
+mediators_asvs_sig = mediators_asvs[which(mediators_asvs$padj<=0.05),]
+
+mediators_asvs_count_sig = as.data.frame(table(mediators_asvs_sig$id))
+
+
+
+colnames(mediators_asvs_count_sig)[1] = "ASV"
+
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+
+mediators_asvs_count_sig = merge(mediators_asvs_count_sig, asv_mic_group, by= "ASV")
+mediators_asvs_count_sig = mediators_asvs_count_sig[order(mediators_asvs_count_sig$Freq, decreasing = T),]
+rownames(mediators_asvs_count_sig) = 1:nrow(mediators_asvs_count_sig)
+
+###
+
+
+id_mediator_top1 = which(mediators_asvs_count_sig$Var1 %in% unique(date_asv_mic_group_top1$asv[which(date_asv_mic_group_top1$top1p >0)]))
+
+mediators_asvs_count_sig_group = merge(mediators_asvs_count_sig, asv_mic_group, by.x = "Var1", by.y = "ASV")
+
+
+mediators_asvs_sig_group = merge(asv_mic_group, mediators_asvs_sig,  by.x = "ASV", by.y = "id")
+
+fwrite(mediators_asvs_sig_group[which(mediators_asvs_sig_group$method %in% c("fixed_bic", "fixed_eq")),], "data/supplementary/Supplemental_Table_S2_mediator_asvs.txt", sep="\t", row.names = F, quote = F)
+```
+
+
+#HN, LN
+# just sig mediators after multiple comparison adjustment
+```{r}
+mediators_asvs_nitrogen = fread("largedata/review/mediators_asvs_nitrogen_3626asvs_spb.txt")
+
+mediators_asvs_nitrogen_sig = mediators_asvs_nitrogen[which(mediators_asvs_nitrogen$padj<=0.05),]
+
+
+mediators_asvs_ln_sig = mediators_asvs_nitrogen_sig[which(mediators_asvs_nitrogen_sig$nitrogen == "LN"),]
+mediators_asvs_ln_count_sig = as.data.frame(table(mediators_asvs_ln_sig$id))
+mediators_asvs_ln_count_sig = mediators_asvs_ln_count_sig[order(mediators_asvs_ln_count_sig$Freq, decreasing = T),]
+rownames(mediators_asvs_ln_count_sig) = 1:nrow(mediators_asvs_ln_count_sig)
+
+mediators_asvs_hn_sig = mediators_asvs_nitrogen_sig[which(mediators_asvs_nitrogen_sig$nitrogen == "HN"),]
+mediators_asvs_hn_count_sig = as.data.frame(table(mediators_asvs_hn_sig$id))
+mediators_asvs_hn_count_sig = mediators_asvs_hn_count_sig[order(mediators_asvs_hn_count_sig$Freq, decreasing = T),]
+rownames(mediators_asvs_hn_count_sig) = 1:nrow(mediators_asvs_hn_count_sig)
+
+```
+
+
+
+
+
+
+
+
+### 3626 asvs + spb
+### mediation analysis
+
+```{r}
+library(data.table)
 f <- list.files(path="largedata/review/med_output", pattern="mediators_", full.names = T)
 
 fn <- list.files(path="largedata/review/med_output", pattern="mediators_.*_nitrogen", full.names = T)
@@ -143,6 +275,19 @@ mediators_asvs_hn_count_sig = mediators_asvs_hn_count_sig[order(mediators_asvs_h
 rownames(mediators_asvs_hn_count_sig) = 1:nrow(mediators_asvs_hn_count_sig)
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
