@@ -354,7 +354,12 @@ p_vari_shuffled
 ```{r}
 library(data.table)
 
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait", full.names = T)
+f <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="coef_mic_trait.*_spb_jyang", full.names = T)
+fn <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="coef_mic_trait.*_nitrogen_.*_spb_jyang", full.names = T)
+
+f = f[-which(f %in% fn)]
+
+
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -364,12 +369,12 @@ for(i in 1:length(f)){
 }
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+out$date  <- gsub(".*date_|_spb_jyang.*", "", out$file)
 out = out[,-3]
 
 
 
-fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_3626asvs_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -378,7 +383,7 @@ fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t",
 #coef of microbiome spread
 ```{r}
 
-coef_all = fread("largedata/review/coef_mic_all_traits_dates_154tax.txt", data.table = F)
+coef_all = fread("largedata/review/coef_mic_all_traits_dates_3626asvs_spb.txt", data.table = F)
 
 
 coef_all$date <- factor(coef_all$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
@@ -631,37 +636,12 @@ p_vari_ln_c
 
 
 
-
 #coef of microbiome, on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
 ```{r}
 library(data.table)
 
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait", full.names = T)
+f <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="coef_mic_trait.*_nitrogen_.*_spb_jyang", full.names = T)
 
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.*", "", out$file)
-out = out[,-3]
-
-
-
-fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-
-
-```
-
-#coef of microbiome, on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
-```{r}
-library(data.table)
-
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait.*_nitrogen_", full.names = T)
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -672,13 +652,13 @@ for(i in 1:length(f)){
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
 out$date  <- gsub(".*date_|_nitrogen.*", "", out$file)
-out$nitrogen = gsub(".*nitrogen_|_jyang.*", "", out$file)
+out$nitrogen = gsub(".*nitrogen_|_spb_jyang.*", "", out$file)
 
 out = out[,-3]
 
 
 
-fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -687,7 +667,9 @@ fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", se
 
 #top abs_scaled asvs
 ```{r}
-coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", data.table = F)
+coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs.txt", data.table = F)
+
+date = as.character(data.frame(table(coef_vis$date))$Var1)
 
 coef_vis_hn = coef_vis[which(coef_vis$nitrogen == "HN"),]
 out <- data.frame()
@@ -697,7 +679,7 @@ for(i in 1:length(vis)){
     tem$abs_coef = abs(tem$coef)
     tem = tem[order(-tem$abs_coef),]
     tem$rank = 1:nrow(tem)
-    tem$top1p = ifelse(tem$rank <= 15, 1, 0)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
     tem$top100 = ifelse(tem$rank <= 100, 1, 0)
     out <- rbind(out, tem)
   }
@@ -717,7 +699,7 @@ for(i in 1:length(vis)){
     tem$abs_coef = abs(tem$coef)
     tem = tem[order(-tem$abs_coef),]
     tem$rank = 1:nrow(tem)
-    tem$top1p = ifelse(tem$rank <= 15, 1, 0)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
     tem$top100 = ifelse(tem$rank <= 100, 1, 0)
     out <- rbind(out, tem)
   }
@@ -781,9 +763,9 @@ date_asv_mic_group_top1_anno_LN$date <- factor(date_asv_mic_group_top1_anno_LN$d
 
 date_asv_mic_group_jtop1_anno_LN_aug12 = date_asv_mic_group_top1_anno_LN[which((date_asv_mic_group_top1_anno_LN$date == "Aug-12") & (date_asv_mic_group_top1_anno_LN$iftop1p == "Top 1% ASVs")), ]
 
-fwrite(date_asv_mic_group_jtop1_anno_LN_aug12, "largedata/date_asv_mic_group_jtop1_anno_LN_aug12.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(date_asv_mic_group_jtop1_anno_LN_aug12, "largedata/review/date_asv_mic_group_jtop1_anno_LN_aug12_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
-date_asv_mic_group_jtop1_anno_LN_aug12 = fread("largedata/date_asv_mic_group_jtop1_anno_LN_aug12.txt", data.table = F)
+date_asv_mic_group_jtop1_anno_LN_aug12 = fread("largedata/review/date_asv_mic_group_jtop1_anno_LN_aug12_spb.txt", data.table = F)
 
 p_h2_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
     stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
