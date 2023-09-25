@@ -634,7 +634,10 @@ p_vari_ln_c
 ```{r}
 library(data.table)
 
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait", full.names = T)
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait.*_spb", full.names = T)
+fn <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait.*_nitrogen_.*_spb", full.names = T)
+f = f[-which(f %in% fn)]
+
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -644,12 +647,12 @@ for(i in 1:length(f)){
 }
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+out$date  <- gsub(".*date_|_spb_jyang.*", "", out$file)
 out = out[,-3]
 
 
 
-fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -659,7 +662,7 @@ fwrite(out, "largedata/review/coef_mic_all_traits_dates_154tax.txt", sep = "\t",
 ```{r}
 library(data.table)
 
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait.*_nitrogen_", full.names = T)
+f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="coef_mic_trait.*_nitrogen_.*_spb", full.names = T)
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -670,13 +673,13 @@ for(i in 1:length(f)){
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
 out$date  <- gsub(".*date_|_nitrogen.*", "", out$file)
-out$nitrogen = gsub(".*nitrogen_|_jyang.*", "", out$file)
+out$nitrogen = gsub(".*nitrogen_|_spb_jyang.*", "", out$file)
 
 out = out[,-3]
 
 
 
-fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_154tax_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -685,7 +688,25 @@ fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", se
 
 #top abs_scaled asvs
 ```{r}
-coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_154tax.txt", data.table = F)
+coef_all = fread("largedata/review/coef_mic_all_traits_dates_154tax_spb.txt", data.table = F)
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_all[which((coef_all$trait == vis[i])  & (coef_all$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 15, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+
+
+
+
+coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_154tax_spb.txt", data.table = F)
 
 coef_vis_hn = coef_vis[which(coef_vis$nitrogen == "HN"),]
 out <- data.frame()

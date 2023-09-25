@@ -418,6 +418,24 @@ library(ggpubr)
 figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]], ncol = 2, nrow = 4)
 figure
 
+
+coef_all = fread("largedata/review/coef_mic_all_traits_dates_3626asvs_spb.txt", data.table = F)
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_all[which((coef_all$trait == vis[i])  & (coef_all$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+
+
+
 ```
 
 
@@ -658,7 +676,7 @@ out = out[,-3]
 
 
 
-fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -667,7 +685,7 @@ fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs.txt", 
 
 #top abs_scaled asvs
 ```{r}
-coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs.txt", data.table = F)
+coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.txt", data.table = F)
 
 date = as.character(data.frame(table(coef_vis$date))$Var1)
 
