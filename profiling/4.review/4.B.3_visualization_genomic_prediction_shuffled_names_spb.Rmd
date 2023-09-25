@@ -184,7 +184,7 @@ p_vari_shuffled
 ```{r}
 library(data.table)
 
-f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="prediction_accuracy_seed.*_shuffled_quadrant_yes.*_154tax_spb", full.names = T)
+f <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="prediction_accuracy_seed.*_shuffled_quadrant_yes.*_3626asvs_spb", full.names = T)
 
 
 out <- data.frame()
@@ -196,13 +196,13 @@ for(i in 1:length(f)){
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
 #out$date = gsub(".*date_|_shuffled.*", "", out$file)
-out$shuffled  <- gsub(".*shuffled_|_154tax_spb.*", "", out$file)
+out$shuffled  <- gsub(".*shuffled_|_3626asvs_spb.*", "", out$file)
 
 id_r = which((out$method == "rrBLUP_PC_microbiome") | (out$method == "rrBLUP"))
 out = out[-id_r,]
 
 
-fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_quandrant_yes_154Functional_Tax_Groupes_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_quandrant_yes_3626asvs_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
@@ -217,7 +217,7 @@ library(agricolae)
 library(ggpubr)
 library(dplyr)
 
-pred_all = fread("largedata/review/pred_seeds_vis_shuffled_154Functional_Tax_Groupes_spb.txt", header = T)
+pred_all = fread("largedata/review/pred_seeds_vis_shuffled_sample_names_3626asvs_spb.txt", header = T)
 
 
 pred_all_avg =  as.data.frame( pred_all %>% group_by(trait, date, method, seed, shuffled) %>% summarise_all(mean))
@@ -229,7 +229,7 @@ pred_all_avg = pred_all_avg[-which((pred_all_avg$method == "rrBLUP") & (pred_all
 pred_all_avg$method[which((pred_all_avg$method == "rrBLUP_geno_microbiome") & (pred_all_avg$shuffled == "yes"))] = "rrBLUP_geno_shuffled_microbiome"
 
 
-pred_quadrant = fread("largedata/review/pred_seeds_vis_shuffled_quandrant_yes_154Functional_Tax_Groupes_spb.txt", header = T)
+pred_quadrant = fread("largedata/review/pred_seeds_vis_shuffled_quandrant_yes_3626asvs_spb.txt", header = T)
 
 
 pred_quadrant_avg =  as.data.frame( pred_quadrant %>% group_by(trait, date, method, seed, shuffled) %>% summarise_all(mean))
@@ -249,7 +249,7 @@ pred_all_avg$method <- factor(pred_all_avg$method, levels = c( "rrBLUP", "rrBLUP
 vis = as.character(data.frame(table(pred_all_avg$trait))$Var1)
 
 
-my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"),  c("SNP + shuffled ASV by sample names", "SNP + shuffled ASV by sample names within quadrant"))
+my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"),  c("SNP + ASV", "SNP + shuffled ASV by sample names within quadrant"),   c("SNP + shuffled ASV by sample names", "SNP + shuffled ASV by sample names within quadrant"))
 
 
 
