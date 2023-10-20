@@ -81,7 +81,7 @@ library(ggpubr)
 figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]], ncol = 3, nrow = 3)
 figure
 
-pdf("largedata/review/figures/p_vis.pdf", width = 13, height= 10)
+pdf("largedata/review/figures/p_vis_spb.pdf", width = 13, height= 10)
 figure
 dev.off()
 
@@ -431,7 +431,7 @@ for (i in seq(1,47,by=2)) {
 p_vari_shuffled = ggarrange(p_vari_shuffled_3626, p_vari_shuffled_154, p_vari_shuffled_19, nrow = 1, ncol = 3)
 p_vari_shuffled
 
-pdf("largedata/review/figures/p_vari_shuffled.pdf", width = 13, height= 6)
+pdf("largedata/review/figures/p_vari_shuffled_spb.pdf", width = 13, height= 6)
 p_vari_shuffled
 dev.off()
 
@@ -578,7 +578,7 @@ p_vari_shuffled_quadrant = ggarrange(p_vari_shuffled_aug12, p_vari_shuffled_aug2
 p_vari_shuffled_quadrant
 
 
-pdf("largedata/review/figures/p_vari_shuffled_quadrant.pdf", width = 8, height= 13)
+pdf("largedata/review/figures/p_vari_shuffled_quadrant_spb.pdf", width = 8, height= 13)
 p_vari_shuffled_quadrant
 dev.off()
 
@@ -718,7 +718,7 @@ pred_all_nitrogen_avg$method[which((pred_all_nitrogen_avg$method == "rrBLUP_geno
 
 
 
-pred_all_nitrogen_avg$method <- factor(pred_all_nitrogen_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV by sample names"))
+pred_all_nitrogen_avg$method <- factor(pred_all_nitrogen_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV"))
 
 
 
@@ -726,7 +726,7 @@ vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
 
 i=6
 
-my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"))
+my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV"))
 
 
 p_vari_shuffled_hn = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
@@ -768,7 +768,7 @@ p_vari_n_c
 
 
 
-pdf("largedata/p_vari_n_c.pdf", width = 10, height= 6)
+pdf("largedata/review/figures/p_vari_n_c_spb.pdf", width = 10, height= 6)
 p_vari_n_c
 dev.off()
 
@@ -917,6 +917,36 @@ fwrite(out, "largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.tx
 
 
 
+```
+
+
+```{r}
+coef_vis = fread("largedata/review/coef_mic_all_traits_dates_3626asvs_spb.txt", data.table = F)
+
+date = as.character(data.frame(table(coef_vis$date))$Var1)
+
+vis = vis = as.character(data.frame(table(coef_vis$trait))$Var1)
+
+i = 6
+
+fsize = 16
+
+p_vari_coef_mic = ggboxplot(coef_vis[which((coef_vis$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
+    xlab("") +
+    ylab("Coef of ASVs ") +
+    ggtitle(vis[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 25, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_coef_mic
 ```
 
 
@@ -1127,9 +1157,18 @@ dev.off()
 ```
 
 
-#coef of SNPs, on HCC
+
+
+#coef of snps, on HCC cd /common/jyanglab/zhikaiyang/projects/GP_microbiome
 ```{r}
-f <- list.files(path="largedata/outputs", pattern="coef_snps_trait", full.names = T)
+library(data.table)
+
+f <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="coef_snps_trait.*_spb_jyang", full.names = T)
+fn <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="coef_snps_trait.*_nitrogen_.*_spb_jyang", full.names = T)
+
+f = f[-which(f %in% fn)]
+
+
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -1139,32 +1178,32 @@ for(i in 1:length(f)){
 }
 
 out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+out$date  <- gsub(".*date_|_spb_jyang.*", "", out$file)
 out = out[,-3]
 
 
 
-fwrite(out, "largedata/coef_snps_all_traits_dates.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out, "largedata/review/coef_snps_all_traits_dates_3626asvs_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
 ```
 
+
 #coef of snps
 ```{r}
 
-coef_all_snps = fread("largedata/coef_snps_all_traits_dates.txt", data.table = F)
+coef_all_snps = fread("largedata/review/coef_snps_all_traits_dates_3626asvs_spb.txt", data.table = F)
 
 coef_all_snps$date <- factor(coef_all_snps$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
 
 
 vis = as.character(data.frame(table(coef_all_snps$trait))$Var1)
+i = 6
 
-plist = list()
+fsize = 16
 
-for (i in 1:9) {
-    plist[[i]] = ggboxplot(coef_all_snps[which((coef_all_snps$trait == vis[i])),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
-    #stat_compare_means(aes(group = method), label = "p.signif", paired = T)+
+p_vari_coef_snps = ggboxplot(coef_all_snps[which((coef_all_snps$trait == vis[i])),][sample(1:150000,15000),], x = "date", y = "coef", color = "date", palette = "jco",add = "jitter") +
     xlab("") +
     ylab("Coef of SNPs ") +
     ggtitle(vis[i]) +
@@ -1179,16 +1218,15 @@ for (i in 1:9) {
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
-    
-}
+p_vari_coef_snps
+
+figure3 <- ggarrange(p_vari_coef_mic, p_vari_coef_snps, ncol = 2, nrow = 1)
 
 
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
 
-pdf("largedata/coef_snps.pdf", width = 12, height= 9)
-figure
+
+pdf("largedata/review/figures/p_vari_coef_mic_snps_spb.pdf", width = 10, height= 6)
+figure3
 dev.off()
 
 
