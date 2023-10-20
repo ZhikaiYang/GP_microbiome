@@ -162,6 +162,23 @@ p_vari_test_3626 = ggarrange(p_vari_shuffled_aug12_3626, p_vari_shuffled_aug22_3
 
 p_vari_test_3626
 
+
+
+pred_all_compare_mean = as.data.frame( pred_all_avg[,-5] %>% group_by(trait, date, method) %>% summarise_all(mean))
+pred_all_compare_mean = pred_all_compare_mean[-which(pred_all_compare_mean$method == "SNP + shuffled Microbiome"),]
+
+rownames(pred_all_compare_mean) = 1:nrow(pred_all_compare_mean)
+
+pred_all_compare_mean_d = pred_all_compare_mean[seq(1,47,by=2),c(1,2,5)]
+
+rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
+
+for (i in seq(1,47,by=2)) {
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])
+}
+
+
+
 ```
 
 
@@ -270,6 +287,22 @@ p_vari_test_154 = ggarrange(p_vari_shuffled_aug12_154, p_vari_shuffled_aug22_154
 
 p_vari_test_154
 
+
+
+pred_all_compare_mean = as.data.frame( pred_all_avg[,-5] %>% group_by(trait, date, method) %>% summarise_all(mean))
+pred_all_compare_mean = pred_all_compare_mean[-which(pred_all_compare_mean$method == "SNP + shuffled Microbiome"),]
+
+rownames(pred_all_compare_mean) = 1:nrow(pred_all_compare_mean)
+
+pred_all_compare_mean_d = pred_all_compare_mean[seq(1,47,by=2),c(1,2,5)]
+
+rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
+
+for (i in seq(1,47,by=2)) {
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])
+}
+
+
 ```
 # 19 classes
 
@@ -375,6 +408,22 @@ p_vari_shuffled_sep5_19 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vi
 p_vari_test_19 = ggarrange(p_vari_shuffled_aug12_19, p_vari_shuffled_aug22_19, p_vari_shuffled_sep5_19, nrow = 3, ncol = 1)
 
 p_vari_test_19
+
+
+
+pred_all_compare_mean = as.data.frame( pred_all_avg[,-5] %>% group_by(trait, date, method) %>% summarise_all(mean))
+pred_all_compare_mean = pred_all_compare_mean[-which(pred_all_compare_mean$method == "SNP + shuffled Microbiome"),]
+
+rownames(pred_all_compare_mean) = 1:nrow(pred_all_compare_mean)
+
+pred_all_compare_mean_d = pred_all_compare_mean[seq(1,47,by=2),c(1,2,5)]
+
+rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
+
+for (i in seq(1,47,by=2)) {
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])
+}
+
 
 ```
 
