@@ -473,14 +473,14 @@ pred_quadrant_avg$method[which((pred_quadrant_avg$method == "rrBLUP_geno_microbi
 
 pred_all_avg = rbind(pred_all_avg, pred_quadrant_avg)
 
-pred_all_avg$method <- factor(pred_all_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome", "rrBLUP_geno_shuffled_microbiome_quadrant"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV by sample names", "SNP + shuffled ASV by sample names within quadrant"))
+pred_all_avg$method <- factor(pred_all_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome", "rrBLUP_geno_shuffled_microbiome_quadrant"), labels =c( "SNP", "SNP + ASV", "SNP + shuffled ASV", "SNP + shuffled ASV within quadrant"))
 
 
 
 vis = as.character(data.frame(table(pred_all_avg$trait))$Var1)
 
 
-my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV by sample names"),  c("SNP + ASV", "SNP + shuffled ASV by sample names within quadrant"),   c("SNP + shuffled ASV by sample names", "SNP + shuffled ASV by sample names within quadrant"))
+my_comparisons <- list(c("SNP", "SNP + ASV"), c("SNP", "SNP + shuffled ASV"),  c("SNP + ASV", "SNP + shuffled ASV within quadrant"),   c("SNP + shuffled ASV", "SNP + shuffled ASV within quadrant"))
 
 
 
@@ -570,12 +570,18 @@ p_vari_shuffled_sep5 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i
           axis.title=element_blank(),
           axis.text.x = element_blank(),
           legend.position = "bottom", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
+          legend.title = element_text(size=fsize-5, face="bold"),
+          legend.text = element_text(size=fsize-5))
 
-p_vari_shuffled = ggarrange(p_vari_shuffled_aug12, p_vari_shuffled_aug22, p_vari_shuffled_sep5, nrow = 3, ncol = 1)
+p_vari_shuffled_quadrant = ggarrange(p_vari_shuffled_aug12, p_vari_shuffled_aug22, p_vari_shuffled_sep5, nrow = 3, ncol = 1)
 
-p_vari_shuffled
+p_vari_shuffled_quadrant
+
+
+pdf("largedata/review/figures/p_vari_shuffled_quadrant.pdf", width = 8, height= 13)
+p_vari_shuffled_quadrant
+dev.off()
+
 ```
 
 
