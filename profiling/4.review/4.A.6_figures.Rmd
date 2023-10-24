@@ -1233,167 +1233,187 @@ dev.off()
 ```
 
 
-# R2 of different sources
+# kinblup, separate HN and LN, all vegetation indexes visualization 
 ```{r}
-f <- list.files(path="largedata/outputs", pattern="r2_d_rrblup_geno_microbiome_trait", full.names = T)
+pred_all_nitrogen = fread("largedata/review/pred_seeds_nitrogen_vis_shuffled_names_154tax_kinblup_spb.txt", data.table = F)
 
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
+pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, date, method, seed, nitrogen, shuffled) %>% summarise_all(mean))
 
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.*", "", out$file)
+pred_all_nitrogen_avg$date <- factor(pred_all_nitrogen_avg$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
 
-out = out[,-4]
-fwrite(out, "largedata/r2_d_rrblup_geno_microbiome_traits.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+pred_all_nitrogen_avg = pred_all_nitrogen_avg[-which((pred_all_nitrogen_avg$method == "rrBLUP") & (pred_all_nitrogen_avg$shuffled == "yes")),]
 
-```
+pred_all_nitrogen_avg = pred_all_nitrogen_avg[-which((pred_all_nitrogen_avg$method == "rrBLUP_geno_microbiome") & (pred_all_nitrogen_avg$shuffled == "yes")),]
 
 
+pred_all_nitrogen_avg = pred_all_nitrogen_avg[-which(pred_all_nitrogen_avg$shuffled == "snps_yes"),]
 
-# visualization of R2 of different sources
-```{r}
-r2_d_rrblup_geno_microbiome = fread("largedata/r2_d_rrblup_geno_microbiome_traits.txt", data.table = F)
+
+pred_all_nitrogen_avg$method <- factor(pred_all_nitrogen_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome"), labels =c( "SNP", "SNP + Microbiome"))
 
 
 
-fsize =16
+vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
+
+i=6
+
+my_comparisons <- c("SNP", "SNP + Microbiome")
 
 
-r2_d_rrblup_geno_microbiome$source <- factor(r2_d_rrblup_geno_microbiome$source, levels = c("total", "fixed_and_random", "fixed", "random", "genome", "microbiome", "residual"), labels =c("total", "fixed_and_random", "fixed", "random", "genome", "microbiome", "residual"))
-
-r2_d_rrblup_geno_microbiome$date <- factor(r2_d_rrblup_geno_microbiome$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-
-vis = as.character(data.frame(table(r2_d_rrblup_geno_microbiome$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[i])),], aes(x=date, y=r2, fill=source)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  scale_fill_brewer(palette="Paired")+
+p_vari_shuffled_hn = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    #stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
-    ylab("R-squared") +
-    ggtitle(vis[i]) +
+    ylab("Prediction Accuracy ") +
+    ggtitle("HN") +
     theme_classic() +
-    #labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
           axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "right", 
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
-    
-}
-
-
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
-
-
-
-```
-
-
-
-# R2 of different sources
-```{r}
-f <- list.files(path="largedata/outputs", pattern="r2_d_nitrogen_rrblup_geno_microbiome_trait", full.names = T)
-
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- fread(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.*", "", out$file)
-
-out = out[,-4]
-fwrite(out, "largedata/r2_d_nitrogen_rrblup_geno_microbiome_traits.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-```
-
-
-
-# visualization of R2 of different sources
-```{r}
-r2_d_rrblup_geno_microbiome = fread("largedata/r2_d_nitrogen_rrblup_geno_microbiome_traits.txt", data.table = F)
-
-r2_d_rrblup_geno_microbiome = r2_d_rrblup_geno_microbiome[which(r2_d_rrblup_geno_microbiome$source %in% c("nitrogen", "genome", "microbiome")),]
-
-fsize =16
-
-
-r2_d_rrblup_geno_microbiome$source <- factor(r2_d_rrblup_geno_microbiome$source, levels = c("nitrogen", "genome", "microbiome"), labels =c("nitrogen", "genome", "microbiome"))
-
-r2_d_rrblup_geno_microbiome$date <- factor(r2_d_rrblup_geno_microbiome$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
-
-
-vis = as.character(data.frame(table(r2_d_rrblup_geno_microbiome$trait))$Var1)
-
-plist = list()
-
-for (i in 1:9) {
-    plist[[i]] = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[i])),], aes(x=date, y=r2, fill=source)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  scale_fill_brewer(palette="Paired")+
+p_vari_shuffled_ln = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "LN")),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    #stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
-    ylab("Variance Explained") +
-    ggtitle(vis[i]) +
+    ylab("Prediction Accuracy ") +
+    ggtitle("LN") +
     theme_classic() +
-    #labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(0.15, 0.8)) +
     theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=fsize-2, face="bold"),
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
           axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "right", 
+          legend.position = "none", 
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
-    
-}
+p_vari_n_c <- ggarrange(p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 2, nrow = 1)
+p_vari_n_c
 
 
-library(ggpubr)
-figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]],plist[[5]],plist[[6]],plist[[7]],plist[[8]],plist[[9]], ncol = 3, nrow = 3)
-figure
 
-p_vari_var_part = ggplot(r2_d_rrblup_geno_microbiome[which((r2_d_rrblup_geno_microbiome$trait == vis[6])),], aes(x=date, y=r2, fill=source)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  scale_fill_brewer(palette="Paired")+
-    xlab("Days after microbiome sampling") +
-    ylab("Variance Explained") +
-    ggtitle(vis[6]) +
-    theme_classic() +
-    #labs(fill = "") +
-    #scale_y_continuous(limits = c(0.15, 0.8)) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=14, face="bold"),
-          strip.text.x = element_text(size = 14, face = "bold"),
-          axis.title=element_text(size=fsize-2, face="bold"),
-          axis.text.x = element_text(angle = 25, hjust=0.8),
-          legend.position = "right", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-pdf("largedata/p_vari_var_partition.pdf", width = 6, height= 6)
-p_vari_var_part
+pdf("largedata/review/figures/p_vari_n_c_kinblup_spb.pdf", width = 10, height= 6)
+p_vari_n_c
 dev.off()
 
 
+p_vari_shuffled_hn_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_hn_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Aug-22", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_hn_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Sep-5", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_blank(),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+
+p_vari_shuffled_ln_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Aug-22", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste(vis[i], "Sep-5", sep = "_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_hn_c <- ggarrange(p_vari_shuffled_hn_aug12, p_vari_shuffled_hn_aug22, p_vari_shuffled_hn_sep5, ncol = 1, nrow = 3)
+p_vari_hn_c
+
+p_vari_ln_c <- ggarrange(p_vari_shuffled_ln_aug12, p_vari_shuffled_ln_aug22, p_vari_shuffled_ln_sep5, ncol = 1, nrow = 3)
+p_vari_ln_c
+
 
 ```
+
 
