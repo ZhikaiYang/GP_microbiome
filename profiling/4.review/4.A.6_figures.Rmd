@@ -1415,5 +1415,142 @@ p_vari_ln_c
 
 
 ```
+#yieldc
+```{r}
+library(data.table)
+library(ggplot2)
+library(agricolae)
+library(ggpubr)
+library(dplyr)
 
+pred_yieldc = fread("largedata/review/pred_seeds_yieldc_shuffled_sample_names.txt", data.table = F)
+
+pred_yieldc_avg =  as.data.frame( pred_yieldc %>% group_by(trait, method, seed, shuffled) %>% summarise_all(mean))
+
+pred_yieldc_avg = pred_yieldc_avg[-which((pred_yieldc_avg$method == "rrBLUP") & (pred_yieldc_avg$shuffled == "yes")),]
+
+pred_yieldc_avg$method[which((pred_yieldc_avg$method == "rrBLUP_geno_microbiome") & (pred_yieldc_avg$shuffled == "yes"))] = "rrBLUP_geno_shuffled_microbiome"
+
+
+
+pred_yieldc_avg$method <- factor(pred_yieldc_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + Microbiome", "SNP + shuffled Microbiome"))
+
+
+
+
+
+yieldc = as.character(data.frame(table(pred_yieldc_avg$trait))$Var1)
+
+fsize = 16
+i = 2
+
+my_comparisons <- list(c("SNP", "SNP + Microbiome"), c("SNP", "SNP + shuffled Microbiome"))
+
+compare_means(accuracy ~ method, pred_yieldc_avg[which( (pred_yieldc_avg$trait == yieldc[i])),], method = "t.test", paired = F)
+
+compare_means(accuracy ~ method, pred_yieldc_avg[which( (pred_yieldc_avg$trait == yieldc[i])),], method = "t.test", paired = T)
+
+
+p_cobw_shuffled = ggboxplot(pred_yieldc_avg[which((pred_yieldc_avg$trait == yieldc[i]) ),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(yieldc[i]) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_cobw_shuffled
+
+library(ggpubr)
+figure <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]], ncol = 2, nrow = 2)
+figure
+
+```
+
+
+#yieldc separate HN and LN
+```{r}
+pred_all_nitrogen = fread("largedata/review/pred_seeds_nitrogen_yieldc.txt", data.table = F)
+colnames(pred_all_nitrogen)[2] = "trait"
+pred_all_nitrogen_avg =  as.data.frame( pred_all_nitrogen %>% group_by(trait, method, seed, nitrogen, shuffled) %>% summarise_all(mean))
+
+pred_all_nitrogen_avg = pred_all_nitrogen_avg[-which((pred_all_nitrogen_avg$method == "rrBLUP") & (pred_all_nitrogen_avg$shuffled == "yes")),]
+
+pred_all_nitrogen_avg$method[which((pred_all_nitrogen_avg$method == "rrBLUP_geno_microbiome") & (pred_all_nitrogen_avg$shuffled == "yes"))] = "rrBLUP_geno_shuffled_microbiome"
+
+
+
+pred_all_nitrogen_avg$method <- factor(pred_all_nitrogen_avg$method, levels = c( "rrBLUP", "rrBLUP_geno_microbiome", "rrBLUP_geno_shuffled_microbiome"), labels =c( "SNP", "SNP + Microbiome", "SNP + shuffled Microbiome"))
+
+
+
+vis = as.character(data.frame(table(pred_all_nitrogen_avg$trait))$Var1)
+
+i=2
+
+my_comparisons <- list(c("SNP", "SNP + Microbiome"), c("SNP", "SNP + shuffled Microbiome"))
+
+
+p_vari_shuffled_hn = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste("HN",vis[i],sep="_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_vari_shuffled_ln = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "LN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T)+
+    xlab("") +
+    ylab("Prediction Accuracy ") +
+    ggtitle(paste("LN",vis[i],sep="_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_cobw_n_c <- ggarrange(p_cobw_shuffled, p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 3, nrow = 1)
+p_cobw_n_c
+
+p_cobw_n_c2 <- ggarrange(p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 2, nrow = 1)
+p_cobw_n_c2
+
+
+
+pdf("largedata/review/figures/p_cobw_n_c.pdf", width = 13, height= 6)
+p_cobw_n_c
+dev.off()
+
+pdf("largedata/review/figures/p_cobw_n_c2.pdf", width = 9, height= 6)
+p_cobw_n_c2
+dev.off()
+
+
+
+```
 
