@@ -89,7 +89,7 @@ i=6
 
 p_vari_shuffled_3626 = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]),], x = "date", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
     xlab("") +
-    ylab("Prediction Accuracy ") +
+    ylab("") +
     ggtitle("3626 ASVs") +
     theme_classic() +
     labs(fill = "") +
@@ -108,7 +108,7 @@ p_vari_shuffled_3626 = ggboxplot(pred_all_avg[which(pred_all_avg$trait == vis[i]
 p_vari_shuffled_aug12_3626 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i]) & (pred_all_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
-    ylab("Prediction Accuracy ") +
+    ylab("") +
     ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
     theme_classic() +
     labs(fill = "") +
