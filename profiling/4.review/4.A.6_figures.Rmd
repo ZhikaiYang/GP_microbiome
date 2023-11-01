@@ -1305,7 +1305,7 @@ dev.off()
 
 
 p_vari_shuffled_hn_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F,method.args = list(alternative = "greater"))+
     xlab("") +
     ylab("Prediction Accuracy ") +
     ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
@@ -1322,7 +1322,7 @@ p_vari_shuffled_hn_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
           legend.text = element_text(size=fsize))
 
 p_vari_shuffled_hn_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F, method.args = list(alternative = "greater"))+
     xlab("") +
     ylab("Prediction Accuracy ") +
     ggtitle(paste(vis[i], "Aug-22", sep = "_")) +
@@ -1339,7 +1339,7 @@ p_vari_shuffled_hn_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
           legend.text = element_text(size=fsize))
 
 p_vari_shuffled_hn_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "HN") & (pred_all_nitrogen_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F, method.args = list(alternative = "greater"))+
     xlab("") +
     ylab("Prediction Accuracy ") +
     ggtitle(paste(vis[i], "Sep-5", sep = "_")) +
@@ -1357,7 +1357,7 @@ p_vari_shuffled_hn_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrog
 
 
 p_vari_shuffled_ln_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Aug-12")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F, method.args = list(alternative = "greater"))+
     xlab("") +
     ylab("Prediction Accuracy ") +
     ggtitle(paste(vis[i], "Aug-12", sep = "_")) +
@@ -1374,7 +1374,7 @@ p_vari_shuffled_ln_aug12 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
           legend.text = element_text(size=fsize))
 
 p_vari_shuffled_ln_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Aug-22")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F, method.args = list(alternative = "greater"))+
     xlab("") +
     ylab("Prediction Accuracy ") +
     ggtitle(paste(vis[i], "Aug-22", sep = "_")) +
@@ -1391,7 +1391,7 @@ p_vari_shuffled_ln_aug22 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitro
           legend.text = element_text(size=fsize))
 
 p_vari_shuffled_ln_sep5 = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i])& (pred_all_nitrogen_avg$nitrogen == "LN") & (pred_all_nitrogen_avg$date == "Sep-5")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
-    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F)+
+    stat_compare_means(label = "p.signif", method = "t.test", aes(group = method), paired = F,method.args = list(alternative = "greater"))+
     xlab("") +
     ylab("Prediction Accuracy ") +
     ggtitle(paste(vis[i], "Sep-5", sep = "_")) +
