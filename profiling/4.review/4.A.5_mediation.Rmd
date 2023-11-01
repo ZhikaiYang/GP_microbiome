@@ -126,7 +126,7 @@ mediators_asvs_count_sig_group = merge(mediators_asvs_count_sig, asv_mic_group, 
 
 mediators_asvs_sig_group = merge(asv_mic_group, mediators_asvs_sig,  by.x = "ASV", by.y = "id")
 
-fwrite(mediators_asvs_sig_group[which(mediators_asvs_sig_group$method %in% c("fixed_bic", "fixed_eq")),], "data/supplementary/Supplemental_Table_S2_mediator_asvs.txt", sep="\t", row.names = F, quote = F)
+fwrite(mediators_asvs_sig_group, "data/supplementary/Supplemental_Table_S2_mediator_asvs.txt", sep="\t", row.names = F, quote = F)
 ```
 
 
