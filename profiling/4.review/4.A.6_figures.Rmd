@@ -569,16 +569,16 @@ p_vari_shuffled_sep5 = ggboxplot(pred_all_avg[which((pred_all_avg$trait == vis[i
           strip.text.x = element_text(size = 16, face = "bold"),
           axis.title=element_blank(),
           axis.text.x = element_blank(),
-          legend.position = "bottom", 
+          legend.position = "none", 
           legend.title = element_text(size=fsize-5, face="bold"),
           legend.text = element_text(size=fsize-5))
 
-p_vari_shuffled_quadrant = ggarrange(p_vari_shuffled_aug12, p_vari_shuffled_aug22, p_vari_shuffled_sep5, nrow = 3, ncol = 1)
+p_vari_shuffled_quadrant = ggarrange(p_vari_shuffled_aug12, p_vari_shuffled_aug22, p_vari_shuffled_sep5, nrow = 1, ncol = 3)
 
 p_vari_shuffled_quadrant
 
 
-pdf("largedata/review/figures/p_vari_shuffled_quadrant_spb.pdf", width = 8, height= 13)
+pdf("largedata/review/figures/p_vari_shuffled_quadrant_spb2.pdf", width = 13, height= 6)
 p_vari_shuffled_quadrant
 dev.off()
 
