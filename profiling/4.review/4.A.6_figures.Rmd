@@ -955,6 +955,7 @@ p_vari_coef_mic
 coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.txt", data.table = F)
 
 date = as.character(data.frame(table(coef_vis$date))$Var1)
+vis = as.character(data.frame(table(coef_vis$trait))$Var1)
 
 coef_vis_hn = coef_vis[which(coef_vis$nitrogen == "HN"),]
 out <- data.frame()
@@ -1045,6 +1046,198 @@ date_asv_mic_group_top1_anno_LN = merge(date_asv_mic_group_top1, mic_group_anno[
 date_asv_mic_group_top1_anno_LN$iftop1p = ifelse(date_asv_mic_group_top1_anno_LN$top1p >= 1, "Top 1% ASVs", "Not Top 1% ASVs")
 
 date_asv_mic_group_top1_anno_LN$date <- factor(date_asv_mic_group_top1_anno_LN$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+date_asv_mic_group_jtop1_anno_LN_aug12 = date_asv_mic_group_top1_anno_LN[which((date_asv_mic_group_top1_anno_LN$date == "Aug-12") & (date_asv_mic_group_top1_anno_LN$iftop1p == "Top 1% ASVs")), ]
+
+fwrite(date_asv_mic_group_jtop1_anno_LN_aug12, "largedata/review/date_asv_mic_group_jtop1_anno_LN_aug12_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+
+date_asv_mic_group_jtop1_anno_LN_aug12 = fread("largedata/review/date_asv_mic_group_jtop1_anno_LN_aug12_spb.txt", data.table = F)
+
+p_h2_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Heritability") +
+    ggtitle("HN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_h2_HN
+
+p_h2_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Heritability") +
+    ggtitle("LN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_h2_LN
+
+
+p_Selection_coeff_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Selection_coeff") +
+    ggtitle("HN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_Selection_coeff_HN
+
+p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Selection_coeff") +
+    ggtitle("LN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_Selection_coeff_LN
+
+library(ggpubr)
+p_anno <- ggarrange(p_h2_HN, p_h2_LN, p_Selection_coeff_HN, p_Selection_coeff_LN, ncol = 2, nrow = 2)
+p_anno
+
+pdf("largedata/p_anno.pdf", width = 12, height= 12)
+p_anno
+dev.off()
+
+p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
+    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+    xlab("") +
+    ylab("Selection_coeff") +
+    ggtitle("LN") +
+    theme_classic() +
+    labs(fill = "") +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          axis.text.x = element_text(angle = 0, hjust=0.8),
+          legend.position = "bottom", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+p_Selection_coeff_LN
+pdf("largedata/p_Selection_coeff_LN.pdf", width = 12, height= 12)
+p_Selection_coeff_LN
+dev.off()
+
+```
+
+
+#top abs_scaled asvs
+```{r}
+coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.txt", data.table = F)
+
+date = as.character(data.frame(table(coef_vis$date))$Var1)
+vis = as.character(data.frame(table(coef_vis$trait))$Var1)
+
+coef_vis_hn = coef_vis[which(coef_vis$nitrogen == "HN"),]
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_vis_hn[which((coef_vis_hn$trait == vis[i])  & (coef_vis_hn$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+asv_date_coef_vari_hn = out[which(out$trait == "VARI"), ]
+
+
+
+coef_vis_ln = coef_vis[which(coef_vis$nitrogen == "LN"),]
+out <- data.frame()
+for(i in 1:length(vis)){
+  for (j in 1:length(date)) {
+    tem <- coef_vis_ln[which((coef_vis_ln$trait == vis[i])  & (coef_vis_ln$date == date[j])),]
+    tem$abs_coef = abs(tem$coef)
+    tem = tem[order(-tem$abs_coef),]
+    tem$rank = 1:nrow(tem)
+    tem$top1p = ifelse(tem$rank <= 36, 1, 0)
+    tem$top100 = ifelse(tem$rank <= 100, 1, 0)
+    out <- rbind(out, tem)
+  }
+}
+
+asv_date_coef_vari_ln = out[which(out$trait == "VARI"), ]
+
+
+
+
+
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+date_asv_mic_group_top1_ln = merge(asv_date_coef_vari_ln, asv_mic_group, by.x = "asv", by.y = "ASV")
+date_asv_mic_group_top1_hn = merge(asv_date_coef_vari_hn, asv_mic_group, by.x = "asv", by.y = "ASV")
+
+
+mic_group_anno = fread("largedata/elife-75790-supp3-v2.csv", data.table = F)
+
+
+#HN
+date_asv_mic_group_top1_anno_HN = merge(date_asv_mic_group_top1_hn, mic_group_anno[which(mic_group_anno$nitrogen_treatment == "HN"),], by.x = "Functional_Tax_Group", by.y ="Microbial_Group")
+
+
+#date_asv_mic_group_top1_anno_HN$date <- factor(date_asv_mic_group_top1_anno_HN$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+cor.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Aug12")], date_asv_mic_group_top1_anno_HN$Heritability[which(date_asv_mic_group_top1_anno_HN$date == "Aug12")], method = "spearman")
+
+cor.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Aug22")], date_asv_mic_group_top1_anno_HN$Heritability[which(date_asv_mic_group_top1_anno_HN$date == "Aug22")], method = "spearman")
+
+cor.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Sept5")], date_asv_mic_group_top1_anno_HN$Heritability[which(date_asv_mic_group_top1_anno_HN$date == "Sept5")], method = "spearman")
+
+
+#LN
+date_asv_mic_group_top1_anno_LN = merge(date_asv_mic_group_top1_ln, mic_group_anno[which(mic_group_anno$nitrogen_treatment == "LN"),], by.x = "Functional_Tax_Group", by.y ="Microbial_Group")
+
+
+#date_asv_mic_group_top1_anno_LN$date <- factor(date_asv_mic_group_top1_anno_LN$date, levels = c( "Aug12", "Aug22", "Sept5"), labels =c( "Aug-12", "Aug-22", "Sep-5"))
+
+cor.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Aug12")], date_asv_mic_group_top1_anno_LN$Heritability[which(date_asv_mic_group_top1_anno_LN$date == "Aug12")], method = "spearman")
+
+cor.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Aug22")], date_asv_mic_group_top1_anno_LN$Heritability[which(date_asv_mic_group_top1_anno_LN$date == "Aug22")], method = "spearman")
+
+cor.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")], date_asv_mic_group_top1_anno_LN$Heritability[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")], method = "spearman")
+
+
 
 date_asv_mic_group_jtop1_anno_LN_aug12 = date_asv_mic_group_top1_anno_LN[which((date_asv_mic_group_top1_anno_LN$date == "Aug-12") & (date_asv_mic_group_top1_anno_LN$iftop1p == "Top 1% ASVs")), ]
 
