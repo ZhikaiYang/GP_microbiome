@@ -25,7 +25,7 @@ library(agricolae)
 library(ggpubr)
 library(dplyr)
 
-pred_all = fread("largedata/review/pred_seeds_vis_shuffled_sample_names_3626asvs_spb.txt", header = T)
+pred_all = fread("largedata/review/pred_seeds_vis_shuffled_sample_names_3626asvs_spb_from_count.txt", header = T)
 
 
 pred_all_avg =  as.data.frame( pred_all %>% group_by(trait, date, method, seed, shuffled) %>% summarise_all(mean))

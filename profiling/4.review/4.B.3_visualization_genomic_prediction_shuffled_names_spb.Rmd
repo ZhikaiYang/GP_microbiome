@@ -24,8 +24,11 @@ library(data.table)
 f <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="prediction_accuracy_seed.*_spb", full.names = T)
 
 fn <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="prediction_accuracy_seed.*_nitrogen_.*_spb", full.names = T)
+fq <- list.files(path="largedata/review/output_shuffled_sample_names", pattern="prediction_accuracy_seed.*_shuffled_quadrant_yes.*_3626asvs_spb", full.names = T)
 
 f = f[-which(f %in% fn)]
+f = f[-which(f %in% fq)]
+
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -42,7 +45,7 @@ id_pc = which(out$method == "rrBLUP_PC_microbiome")
 out = out[-id_pc,]
 
 
-fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_sample_names_3626asvs_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_sample_names_3626asvs_spb_from_count.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
