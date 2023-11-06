@@ -431,7 +431,7 @@ for (i in seq(1,47,by=2)) {
 p_vari_shuffled = ggarrange(p_vari_shuffled_3626, p_vari_shuffled_154, p_vari_shuffled_19, nrow = 1, ncol = 3)
 p_vari_shuffled
 
-pdf("largedata/review/figures/p_vari_shuffled_spb.pdf", width = 13, height= 6)
+pdf("largedata/review/figures/p_vari_shuffled_spb2.pdf", width = 13, height= 6)
 p_vari_shuffled
 dev.off()
 
@@ -1477,7 +1477,7 @@ for (i in 1:4) {
     plist[[i]] = ggboxplot(pred_yieldc_avg[which(pred_yieldc_avg$trait == yieldc[i]),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = F)+
     xlab("") +
-    ylab("Prediction Accuracy ") +
+    ylab("") +
     ggtitle(yieldc[i]) +
     theme_classic() +
     labs(fill = "") +
@@ -1543,6 +1543,42 @@ p_vari_shuffled_hn = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_av
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
+
+plist = list()
+
+fsize = 16
+
+for (i in 1:4) {
+    plist[[i]] = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "HN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T, method.args = list(alternative = "less"))+
+    xlab("") +
+    ylab("") +
+    ggtitle(paste("HN",vis[i],sep="_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+fig_hn <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]], ncol = 4, nrow = 1)
+fig_hn
+
+
+
+
+
+
 p_vari_shuffled_ln = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "LN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
     stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T, method.args = list(alternative = "less"))+
     xlab("") +
@@ -1560,12 +1596,45 @@ p_vari_shuffled_ln = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_av
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
 
+
+plist = list()
+
+fsize = 16
+
+for (i in 1:4) {
+    plist[[i]] = ggboxplot(pred_all_nitrogen_avg[which((pred_all_nitrogen_avg$trait == vis[i]) & (pred_all_nitrogen_avg$nitrogen == "LN")),], x = "method", y = "accuracy", color = "method", palette = "jco",add = "jitter") +
+    stat_compare_means(comparisons = my_comparisons, label = "p.signif", method = "t.test", aes(group = method), paired = T, method.args = list(alternative = "less"))+
+    xlab("") +
+    ylab("") +
+    ggtitle(paste("LN",vis[i],sep="_")) +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_y_continuous(limits = c(0.15, 0.8)) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = "none", 
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+
+    
+}
+
+
+library(ggpubr)
+fig_ln <- ggarrange(plist[[1]], plist[[2]],plist[[3]],plist[[4]], ncol = 4, nrow = 1)
+fig_ln
+
 p_cobw_n_c <- ggarrange(p_cobw_shuffled, p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 3, nrow = 1)
 p_cobw_n_c
 
 p_cobw_n_c2 <- ggarrange(p_vari_shuffled_hn, p_vari_shuffled_ln, ncol = 2, nrow = 1)
 p_cobw_n_c2
 
+p_yieldc <- ggarrange(fig_hn, fig_ln, ncol = 1, nrow = 2)
+p_yieldc
 
 
 pdf("largedata/review/figures/p_cobw_n_c.pdf", width = 13, height= 6)
@@ -1576,7 +1645,18 @@ pdf("largedata/review/figures/p_cobw_n_c2.pdf", width = 9, height= 6)
 p_cobw_n_c2
 dev.off()
 
+pdf("largedata/review/figures/p_yieldc_hn.pdf", width = 9, height= 10)
+fig_hn
+dev.off()
 
+pdf("largedata/review/figures/p_yieldc_ln.pdf", width = 9, height= 10)
+fig_ln
+dev.off()
+
+
+pdf("largedata/review/figures/p_yieldc.pdf", width = 18, height= 10)
+p_yieldc
+dev.off()
 
 ```
 
