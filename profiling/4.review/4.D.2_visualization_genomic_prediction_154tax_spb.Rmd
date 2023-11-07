@@ -25,7 +25,11 @@ f <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", patter
 
 fn <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="prediction_accuracy_seed.*_nitrogen_.*_154tax_spb", full.names = T)
 
+fq <- list.files(path="largedata/review/output_154Functional_Tax_Groupes", pattern="prediction_accuracy_seed.*_shuffled_quadrant_yes.*_154tax_spb", full.names = T)
+
+
 f = f[-which(f %in% fn)]
+f = f[-which(f %in% fq)]
 
 out <- data.frame()
 for(i in 1:length(f)){
@@ -42,7 +46,7 @@ id_pc = which(out$method == "rrBLUP_PC_microbiome")
 out = out[-id_pc,]
 
 
-fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_154Functional_Tax_Groupes_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_154Functional_Tax_Groupes_spb_nlogrel.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 

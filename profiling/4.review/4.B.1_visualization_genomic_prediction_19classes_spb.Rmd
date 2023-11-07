@@ -39,7 +39,7 @@ id_pc = which(out$method == "rrBLUP_PC_microbiome")
 out = out[-id_pc,]
 
 
-fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_19classes_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+fwrite(out[,-7], "largedata/review/pred_seeds_vis_shuffled_19classes_spb_nlogrel.txt", sep = "\t", quote = F, row.names = F, col.names = T)
 
 
 
