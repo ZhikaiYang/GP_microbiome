@@ -174,7 +174,7 @@ pred_all_compare_mean_d = pred_all_compare_mean[seq(1,47,by=2),c(1,2,5)]
 rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
 
 for (i in seq(1,47,by=2)) {
-  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])/pred_all_compare_mean$accuracy[i]
 }
 
 
@@ -299,7 +299,7 @@ pred_all_compare_mean_d = pred_all_compare_mean[seq(1,47,by=2),c(1,2,5)]
 rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
 
 for (i in seq(1,47,by=2)) {
-  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])/pred_all_compare_mean$accuracy[i]
 }
 
 
@@ -421,7 +421,7 @@ pred_all_compare_mean_d = pred_all_compare_mean[seq(1,47,by=2),c(1,2,5)]
 rownames(pred_all_compare_mean_d) = 1:nrow(pred_all_compare_mean_d)
 
 for (i in seq(1,47,by=2)) {
-  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])
+  pred_all_compare_mean_d$accuracy[((i+1)/2)] = (pred_all_compare_mean$accuracy[i+1]-pred_all_compare_mean$accuracy[i])/pred_all_compare_mean$accuracy[i]
 }
 
 
