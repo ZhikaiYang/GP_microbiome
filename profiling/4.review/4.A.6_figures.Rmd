@@ -1158,7 +1158,7 @@ dev.off()
 ```
 
 
-#top abs_scaled asvs
+#coef of mic vs h2 of mic
 ```{r}
 coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.txt", data.table = F)
 
@@ -1225,6 +1225,28 @@ cor.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_
 cor.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Sept5")], date_asv_mic_group_top1_anno_HN$Heritability[which(date_asv_mic_group_top1_anno_HN$date == "Sept5")], method = "spearman")
 
 
+coef_h2_hn <- ggplot(date_asv_mic_group_top1_anno_HN, aes(x=abs_coef, y=Heritability, color=date)) + 
+    geom_point()+
+    geom_smooth(method=lm) +
+    xlab("") +
+    ylab("") +
+    ggtitle("") +
+    theme_classic() +
+    labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+    theme(plot.title = element_text(size=20, face = "bold"), 
+          axis.text=element_text(size=16, face="bold"),
+          strip.text.x = element_text(size = 16, face = "bold"),
+          axis.title=element_text(size=fsize, face="bold"),
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "bottom",
+          legend.title = element_text(size=fsize, face="bold"),
+          legend.text = element_text(size=fsize))
+coef_h2_hn
+
+
+
 #LN
 date_asv_mic_group_top1_anno_LN = merge(date_asv_mic_group_top1_ln, mic_group_anno[which(mic_group_anno$nitrogen_treatment == "LN"),], by.x = "Functional_Tax_Group", by.y ="Microbial_Group")
 
@@ -1237,115 +1259,44 @@ cor.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_
 
 cor.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")], date_asv_mic_group_top1_anno_LN$Heritability[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")], method = "spearman")
 
-
-
-date_asv_mic_group_jtop1_anno_LN_aug12 = date_asv_mic_group_top1_anno_LN[which((date_asv_mic_group_top1_anno_LN$date == "Aug-12") & (date_asv_mic_group_top1_anno_LN$iftop1p == "Top 1% ASVs")), ]
-
-fwrite(date_asv_mic_group_jtop1_anno_LN_aug12, "largedata/review/date_asv_mic_group_jtop1_anno_LN_aug12_spb.txt", sep = "\t", quote = F, row.names = F, col.names = T)
-
-date_asv_mic_group_jtop1_anno_LN_aug12 = fread("largedata/review/date_asv_mic_group_jtop1_anno_LN_aug12_spb.txt", data.table = F)
-
-p_h2_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
+coef_h2_ln <- ggplot(date_asv_mic_group_top1_anno_LN, aes(x=abs_coef, y=Heritability, color=date)) + 
+    geom_point()+
+    geom_smooth(method=lm) +
     xlab("") +
-    ylab("Heritability") +
-    ggtitle("HN") +
+    ylab("") +
+    ggtitle("") +
     theme_classic() +
     labs(fill = "") +
+    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
     theme(plot.title = element_text(size=20, face = "bold"), 
           axis.text=element_text(size=16, face="bold"),
           strip.text.x = element_text(size = 16, face = "bold"),
           axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 0, hjust=0.8),
-          legend.position = "none", 
+          #axis.text.x = element_text(angle = 15, hjust=0.8),
+          #legend.position = c(0.2, 0.8), 
+          legend.position = "bottom",
           legend.title = element_text(size=fsize, face="bold"),
           legend.text = element_text(size=fsize))
-
-p_h2_HN
-
-p_h2_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Heritability", color = "iftop1p", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
-    xlab("") +
-    ylab("Heritability") +
-    ggtitle("LN") +
-    theme_classic() +
-    labs(fill = "") +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 0, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-p_h2_LN
+coef_h2_ln
 
 
-p_Selection_coeff_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
-    xlab("") +
-    ylab("Selection_coeff") +
-    ggtitle("HN") +
-    theme_classic() +
-    labs(fill = "") +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 0, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
 
-p_Selection_coeff_HN
 
-p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
-    xlab("") +
-    ylab("Selection_coeff") +
-    ggtitle("LN") +
-    theme_classic() +
-    labs(fill = "") +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 0, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
+```
+#if certain tax enriched with large effect
+```{r}
+kruskal.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Aug12")], date_asv_mic_group_top1_anno_HN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_HN$date == "Aug12")])
 
-p_Selection_coeff_LN
+kruskal.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Aug22")], date_asv_mic_group_top1_anno_HN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_HN$date == "Aug22")])
 
-library(ggpubr)
-p_anno <- ggarrange(p_h2_HN, p_h2_LN, p_Selection_coeff_HN, p_Selection_coeff_LN, ncol = 2, nrow = 2)
-p_anno
+kruskal.test(date_asv_mic_group_top1_anno_HN$abs_coef[which(date_asv_mic_group_top1_anno_HN$date == "Sept5")], date_asv_mic_group_top1_anno_HN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_HN$date == "Sept5")])
 
-pdf("largedata/p_anno.pdf", width = 12, height= 12)
-p_anno
-dev.off()
 
-p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F)+
-    xlab("") +
-    ylab("Selection_coeff") +
-    ggtitle("LN") +
-    theme_classic() +
-    labs(fill = "") +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 0, hjust=0.8),
-          legend.position = "bottom", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
+kruskal.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Aug12")], date_asv_mic_group_top1_anno_LN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_LN$date == "Aug12")])
 
-p_Selection_coeff_LN
-pdf("largedata/p_Selection_coeff_LN.pdf", width = 12, height= 12)
-p_Selection_coeff_LN
-dev.off()
+kruskal.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Aug22")], date_asv_mic_group_top1_anno_LN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_LN$date == "Aug22")])
+
+kruskal.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")], date_asv_mic_group_top1_anno_LN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")])
 
 ```
 
