@@ -1298,6 +1298,10 @@ kruskal.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_t
 
 kruskal.test(date_asv_mic_group_top1_anno_LN$abs_coef[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")], date_asv_mic_group_top1_anno_LN$Functional_Tax_Group[which(date_asv_mic_group_top1_anno_LN$date == "Sept5")])
 
+
+date_asv_mic_group_top1_anno_LN_mean = as.data.frame(date_asv_mic_group_top1_anno_LN[,c(1,3,5,7:10)] %>% group_by(date,Functional_Tax_Group) %>% summarise_all(mean))
+
+date_asv_mic_group_top1_anno_HN_mean = as.data.frame(date_asv_mic_group_top1_anno_HN[,c(1,3,5,7:10)] %>% group_by(date,Functional_Tax_Group) %>% summarise_all(mean))
 ```
 
 
