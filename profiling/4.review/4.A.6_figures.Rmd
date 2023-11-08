@@ -1064,6 +1064,24 @@ fwrite(rbind(asv_coef_vis, asv_coef_vis_hn, asv_coef_vis_ln), "data/supplementar
 
 ```
 
+#overlap top1% ASV with mediators for VARI
+```{r}
+mediators_asvs = fread("largedata/review/mediators_asvs_overall_3626asvs_spb.txt")
+
+mediators_asvs_sig = mediators_asvs[which(mediators_asvs$padj<=0.05),]
+
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+
+mediators_asvs_sig_group = merge(asv_mic_group, mediators_asvs_sig,  by.x = "ASV", by.y = "id")
+mediators_asvs_sig_group_vari = mediators_asvs_sig_group[which(mediators_asvs_sig_group$trait == "VARI"),]
+#fwrite(mediators_asvs_sig_group, "data/supplementary/Supplemental_Table_S2_mediator_asvs.txt", sep="\t", row.names = F, quote = F)
+
+id_asv_med = intersect(mediators_asvs_sig_group_vari$ASV, asv_coef_vari$asv)
+id_asv_med_hn = intersect(mediators_asvs_sig_group_vari$ASV, asv_coef_vari_hn$asv)
+id_asv_med_ln = intersect(mediators_asvs_sig_group_vari$ASV, asv_coef_vari_ln$asv)
+mediators_asvs_sig_group_vari_top1 = mediators_asvs_sig_group_vari[which(mediators_asvs_sig_group_vari$ASV %in% id_asv_med),]
+```
 
 #top abs_scaled asvs
 ```{r}
