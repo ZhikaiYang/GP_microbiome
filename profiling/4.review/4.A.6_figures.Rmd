@@ -657,6 +657,11 @@ figure
 
 
 coef_all = fread("largedata/review/coef_mic_all_traits_dates_3626asvs_spb.txt", data.table = F)
+
+vis = as.character(data.frame(table(coef_all$trait))$Var1)
+date = as.character(data.frame(table(coef_all$date))$Var1)
+
+
 out <- data.frame()
 for(i in 1:length(vis)){
   for (j in 1:length(date)) {
@@ -670,6 +675,25 @@ for(i in 1:length(vis)){
   }
 }
 
+asv_coef_vari = out[which(out$trait == "VARI"),]
+asv_coef_vari = asv_coef_vari[which(asv_coef_vari$top1p == 1),]
+row.names(asv_coef_vari) = 1:nrow(asv_coef_vari)
+id_asv = intersect(intersect(asv_coef_vari$asv[1:36], asv_coef_vari$asv[37:72]),asv_coef_vari$asv[73:108])
+
+
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+asv_coef_vari = merge(asv_coef_vari, asv_mic_group, by.x = "asv", by.y = "ASV")
+asv_coef_vari_top1_3dates = asv_coef_vari[which(asv_coef_vari$asv %in% id_asv),]
+
+#intersect(intersect(asv_coef_vari$Functional_Tax_Group[which(asv_coef_vari$date == "Aug12")], asv_coef_vari$Functional_Tax_Group[which(asv_coef_vari$date == "Aug22")]),asv_coef_vari$Functional_Tax_Group[which(asv_coef_vari$date == "Sept5")])
+#mic_group_anno = fread("largedata/elife-75790-supp3-v2.csv", data.table = F)
+
+
+asv_coef_vis = out[which(out$top1p == 1),]
+asv_coef_vis = merge(asv_coef_vis, asv_mic_group, by.x = "asv", by.y = "ASV")
+asv_coef_vis$nitrogen = "overall"
+asv_coef_vis = asv_coef_vis[,c(1:4,10,5:9)]
 
 
 
@@ -948,14 +972,14 @@ p_vari_coef_mic = ggboxplot(coef_vis[which((coef_vis$trait == vis[i])),], x = "d
 
 p_vari_coef_mic
 ```
-
-
-#top abs_scaled asvs
+#coef of microbiome under separate N, and output top 1% ASV for overall, HN, LN
 ```{r}
 coef_vis = fread("largedata/review/coef_mic_all_traits_dates_nitrogen_3626asvs_spb.txt", data.table = F)
 
 date = as.character(data.frame(table(coef_vis$date))$Var1)
 vis = as.character(data.frame(table(coef_vis$trait))$Var1)
+
+
 
 coef_vis_hn = coef_vis[which(coef_vis$nitrogen == "HN"),]
 out <- data.frame()
@@ -971,8 +995,28 @@ for(i in 1:length(vis)){
   }
 }
 
-asv_coef_vis_hn = as.data.frame(out[,-(3:5)] %>% group_by(asv) %>% summarise_all(sum))
-asv_date_coef_vis_hn = as.data.frame(out[,-c(3,5)] %>% group_by(date,asv) %>% summarise_all(sum))
+asv_coef_vari_hn = out[which(out$trait == "VARI"),]
+asv_coef_vari_hn = asv_coef_vari_hn[which(asv_coef_vari_hn$top1p == 1),]
+row.names(asv_coef_vari_hn) = 1:nrow(asv_coef_vari_hn)
+id_asv_hn = intersect(intersect(asv_coef_vari_hn$asv[1:36], asv_coef_vari_hn$asv[37:72]),asv_coef_vari_hn$asv[73:108])
+
+
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+asv_coef_vari_hn = merge(asv_coef_vari_hn, asv_mic_group, by.x = "asv", by.y = "ASV")
+asv_coef_vari_top1_3dates_hn = asv_coef_vari_hn[which(asv_coef_vari_hn$asv %in% id_asv_hn),]
+
+
+asv_coef_vis_hn = out[which(out$top1p == 1),]
+asv_coef_vis_hn = merge(asv_coef_vis_hn, asv_mic_group, by.x = "asv", by.y = "ASV")
+
+
+
+
+#asv_coef_vis_hn = as.data.frame(out[,-(3:5)] %>% group_by(asv) %>% summarise_all(sum))
+#asv_date_coef_vis_hn = as.data.frame(out[,-c(3,5)] %>% group_by(date,asv) %>% summarise_all(sum))
+
+
 
 
 
@@ -991,9 +1035,38 @@ for(i in 1:length(vis)){
   }
 }
 
-asv_coef_vis_ln = as.data.frame(out[,-(3:5)] %>% group_by(asv) %>% summarise_all(sum))
-asv_date_coef_vis_ln = as.data.frame(out[,-c(3,5)] %>% group_by(date,asv) %>% summarise_all(sum))
+asv_coef_vari_ln = out[which(out$trait == "VARI"),]
+asv_coef_vari_ln = asv_coef_vari_ln[which(asv_coef_vari_ln$top1p == 1),]
+row.names(asv_coef_vari_ln) = 1:nrow(asv_coef_vari_ln)
+id_asv_ln = intersect(intersect(asv_coef_vari_ln$asv[1:36], asv_coef_vari_ln$asv[37:72]),asv_coef_vari_ln$asv[73:108])
 
+
+asv_mic_group = fread("largedata/elife-75790-supp2-v2.csv", data.table = F)
+asv_mic_group = asv_mic_group[,c(1,8)]
+asv_coef_vari_ln = merge(asv_coef_vari_ln, asv_mic_group, by.x = "asv", by.y = "ASV")
+asv_coef_vari_top1_3dates_ln = asv_coef_vari_ln[which(asv_coef_vari_ln$asv %in% id_asv_ln),]
+
+
+asv_coef_vis_ln = out[which(out$top1p == 1),]
+asv_coef_vis_ln = merge(asv_coef_vis_ln, asv_mic_group, by.x = "asv", by.y = "ASV")
+
+
+
+
+#asv_coef_vis_ln = as.data.frame(out[,-(3:5)] %>% group_by(asv) %>% summarise_all(sum))
+#asv_date_coef_vis_ln = as.data.frame(out[,-c(3,5)] %>% group_by(date,asv) %>% summarise_all(sum))
+
+
+
+
+
+fwrite(rbind(asv_coef_vis, asv_coef_vis_hn, asv_coef_vis_ln), "data/supplementary/Supplemental_Table_S1_top_one_percent_asvs.txt", sep="\t", row.names = F, quote = F)
+
+```
+
+
+#top abs_scaled asvs
+```{r}
 
 
 #asv_date_coef_vis_ln = asv_date_coef_vis_ln[which(asv_date_coef_vis_ln$top100 > 0),]
