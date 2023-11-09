@@ -255,78 +255,6 @@ fwrite(mediators_asvs_sig_group[which(mediators_asvs_sig_group$method %in% c("fi
 ```
 
 
-#HN, LN
-# just sig mediators after multiple comparison adjustment
-```{r}
-mediators_asvs_nitrogen = fread("largedata/review/mediators_asvs_nitrogen.txt")
-mediators_asvs_nitrogen = mediators_asvs_nitrogen[-which(mediators_asvs_nitrogen$id == ""),]
-
-mediators_asvs_nitrogen_sig = mediators_asvs_nitrogen[which(mediators_asvs_nitrogen$padj<=0.05),]
-
-
-mediators_asvs_ln_sig = mediators_asvs_nitrogen_sig[which(mediators_asvs_nitrogen_sig$nitrogen == "LN"),]
-mediators_asvs_ln_count_sig = as.data.frame(table(mediators_asvs_ln_sig$id))
-mediators_asvs_ln_count_sig = mediators_asvs_ln_count_sig[order(mediators_asvs_ln_count_sig$Freq, decreasing = T),]
-rownames(mediators_asvs_ln_count_sig) = 1:nrow(mediators_asvs_ln_count_sig)
-
-mediators_asvs_hn_sig = mediators_asvs_nitrogen_sig[which(mediators_asvs_nitrogen_sig$nitrogen == "HN"),]
-mediators_asvs_hn_count_sig = as.data.frame(table(mediators_asvs_hn_sig$id))
-mediators_asvs_hn_count_sig = mediators_asvs_hn_count_sig[order(mediators_asvs_hn_count_sig$Freq, decreasing = T),]
-rownames(mediators_asvs_hn_count_sig) = 1:nrow(mediators_asvs_hn_count_sig)
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#isnps
-```{r}
-library(data.table)
-f <- list.files(path="largedata/med_output", pattern="isnps_", full.names = T)
-
-out <- data.frame()
-for(i in 1:length(f)){
-  tem <- read.csv(f[i], header=TRUE)
-  tem$file <- f[i]
-  out <- rbind(out, tem)
-}
-
-
-out$method  <- gsub(".*isnps_|_trait.*", "", out$file)
-out$trait  <- gsub(".*trait_|_date.*", "", out$file)
-out$date  <- gsub(".*date_|_jyang.csv", "", out$file)
-
-fwrite(out[,-4],"largedata/isnps_asvs.txt", sep="\t", row.names = F, quote = F)
-
-
-```
-
-```{r}
-isnps_asvs = fread("largedata/isnps_asvs.txt")
-isnps_asvs$sig_id = paste(isnps_asvs$medi, isnps_asvs$method, isnps_asvs$trait, isnps_asvs$date, sep = "_")
-
-mediators_asvs_sig$sig_id = paste(mediators_asvs_sig$id, mediators_asvs_sig$method, mediators_asvs_sig$trait, mediators_asvs_sig$date, sep = "_")
-
-isnps_asvs = isnps_asvs[which(isnps_asvs$sig_id %in% mediators_asvs_sig$sig_id),]
-
-fwrite(isnps_asvs, "largedata/isnps_asvs.txt", sep="\t", row.names = F, quote = F)
-
-isnps_asvs_vari = isnps_asvs[which(isnps_asvs$trait == "VARI"),]
-
-```
-
 #on hcc
 ```{r}
 library(data.table)
@@ -336,15 +264,19 @@ library(tidyr)
 sinfo_microbiome_geno = fread("largedata/Zhikai/sinfo_micobiome_geno.txt",header = T, data.table = F)
 
 
-id_asv_isnp = which(colnames(sinfo_microbiome_geno) %in% c(unique(isnps_asvs$medi),unique(isnps_asvs$snps_for_medi)))
+id_asv = which(colnames(sinfo_microbiome_geno) %in% c("asv_000092", "asv_000524"))
 
-sinfo_asv_isnp = sinfo_microbiome_geno[,c(1:6,3633,id_asv_isnp)] # genotype (column 3633)
-fwrite(sinfo_asv_isnp,"largedata/sinfo_asv_isnp.txt", sep="\t", row.names = F, quote = F)
+sinfo_asv = sinfo_microbiome_geno[,c(1:6,3633,id_asv)] # genotype (column 3633)
+fwrite(sinfo_asv,"largedata/review/sinfo_asv.txt", sep="\t", row.names = F, quote = F)
 
 ```
 
 ```{r}
-sinfo_asv_isnp = fread("largedata/sinfo_asv_isnp.txt")
+library(data.table)
+library(dplyr)
+library(tidyr)
+
+sinfo_asv = fread("largedata/review/sinfo_asv.txt")
 vis = fread("data/ppj220030-sup-0003-tables2.csv",header = T, data.table = F)
 
 # vegetation indexes from column 7 to 14
@@ -358,73 +290,12 @@ vis_canopy = spread(vis_canopy, key = "date", value = colnames(vis)[id_trait])
 vis_canopy$ceil_id = paste("c",ceiling(vis_canopy$Row/2),sep = "_")
 vis_canopy = vis_canopy[,c(18, 14, 6:13, 15:17)]
 vis_canopy = vis_canopy[,c(1,3,7,13)]
-sinfo_pheno_asv_isnp = merge(vis_canopy, sinfo_asv_isnp, by.x = "ceil_id", by.y = "ceil_id")
+sinfo_pheno_asv = merge(vis_canopy, sinfo_asv, by.x = "ceil_id", by.y = "ceil_id")
 
 
 
-id_02 = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN","LN"))) 
-pall <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02], y=sinfo_pheno_asv_isnp$asv_000143[id_02], fill=as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02])) + 
-  geom_violin(trim=FALSE) +
-  stat_compare_means(aes(group = as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02]), label = "p.signif", method = "wilcox.test") +
-    xlab("") +
-    ylab("") +
-    ggtitle("") +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          #axis.text.x = element_text(angle = 15, hjust=0.8),
-          #legend.position = c(0.2, 0.8), 
-          legend.position = "bottom",
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-pall
 
-psn <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$nitrogen[id_02], y=sinfo_pheno_asv_isnp$asv_000143[id_02], fill=as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02])) + 
-  geom_violin(trim=FALSE) +
-  stat_compare_means(aes(group = as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02]), label = "p.signif", method = "wilcox.test") +
-    xlab("") +
-    ylab("") +
-    ggtitle("") +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          #axis.text.x = element_text(angle = 15, hjust=0.8),
-          #legend.position = c(0.2, 0.8), 
-          legend.position = "none",
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-
-sinfo_pheno_asv_isnp$`1-240925424` = as.character(sinfo_pheno_asv_isnp$`1-240925424`)
-psn = ggboxplot(sinfo_pheno_asv_isnp[id_02,], x = "nitrogen", y = "asv_000143", color = "1-240925424", palette = "jco",add = "jitter") +
-    stat_compare_means(aes(group = as.character(sinfo_pheno_asv_isnp$`1-240925424`)[id_02]), label = "p.signif", method = "wilcox.test") +
-    xlab("") +
-    ylab("log (relative abundance) ") +
-    ggtitle("") +
-    theme_classic() +
-    labs(fill = "") +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 0, hjust=0.8),
-          legend.position = "none", 
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-
-
-psn
-
-
-pall_s <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02])) + 
+pall_s <- ggplot(sinfo_pheno_asv, aes(x=asv_000092, y=Aug12)) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -444,12 +315,12 @@ pall_s <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_00
           legend.text = element_text(size=fsize))
 pall_s
 
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02], sinfo_pheno_asv_isnp$Aug12[id_02], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000092, sinfo_pheno_asv_isnp$Aug12, method = "spearman")
 
 
 
 
-psn_s_aug12 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug12[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+psn_s_aug12 <- ggplot(sinfo_pheno_asv, aes(x=asv_000092, y=Aug12, color=nitrogen)) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -469,7 +340,7 @@ psn_s_aug12 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$a
           legend.text = element_text(size=fsize))
 psn_s_aug12
 
-psn_s_aug22 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Aug22[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+psn_s_aug22 <- ggplot(sinfo_pheno_asv, aes(x=asv_000092, y=Aug22, color=nitrogen)) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -489,7 +360,7 @@ psn_s_aug22 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$a
           legend.text = element_text(size=fsize))
 psn_s_aug22
 
-psn_s_sep5 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$asv_000143[id_02], y=sinfo_pheno_asv_isnp$Sept5[id_02], color=sinfo_pheno_asv_isnp$nitrogen[id_02])) + 
+psn_s_sep5 <- ggplot(sinfo_pheno_asv, aes(x=asv_000092, y=Sept5, color=nitrogen)) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -510,42 +381,27 @@ psn_s_sep5 <- ggplot(sinfo_pheno_asv_isnp[id_02,], aes(x=sinfo_pheno_asv_isnp$as
 psn_s_sep5
 
 
-id_02_hn = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN")))
+id_02_hn = which( (sinfo_pheno_asv$nitrogen %in% c("HN")))
 
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Aug12[id_02_hn], method = "spearman")
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Aug22[id_02_hn], method = "spearman")
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_hn], sinfo_pheno_asv_isnp$Sept5[id_02_hn], method = "spearman")
-
-
-id_02_ln = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("LN")))
-
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Aug12[id_02_ln], method = "spearman")
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Aug22[id_02_ln], method = "spearman")
-cor.test(sinfo_pheno_asv_isnp$asv_000143[id_02_ln], sinfo_pheno_asv_isnp$Sept5[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000092[id_02_hn], sinfo_pheno_asv$Aug12[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000092[id_02_hn], sinfo_pheno_asv$Aug22[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000092[id_02_hn], sinfo_pheno_asv$Sept5[id_02_hn], method = "spearman")
 
 
-pdf("largedata/asv_N_std.pdf", width = 5, height= 5)
-psn
-dev.off()
+id_02_ln = which( (sinfo_pheno_asv$nitrogen %in% c("LN")))
+
+cor.test(sinfo_pheno_asv$asv_000092[id_02_ln], sinfo_pheno_asv$Aug12[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000092[id_02_ln], sinfo_pheno_asv$Aug22[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000092[id_02_ln], sinfo_pheno_asv$Sept5[id_02_ln], method = "spearman")
 
 
-pdf("largedata/cor_vis_aug12_asv.pdf", width = 8, height= 5)
-psn_s_aug12
-dev.off()
-
-figure <- ggarrange(psn, psn_s_aug12,psn_s_aug22,psn_s_sep5, ncol = 2, nrow = 2)
-figure
-
-pdf("largedata/asv_N_and_cor_vis_asv.pdf", width = 16, height= 10)
-figure
-dev.off()
 
 
-sinfo_pheno = gather(sinfo_pheno_asv_isnp, key = "date", value = "vari", 2:4)
+sinfo_pheno = gather(sinfo_pheno_asv, key = "date", value = "vari", 2:4)
 
-id_02_hn = which((as.character(sinfo_pheno$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno$nitrogen %in% c("HN"))) 
+id_02_hn = which((sinfo_pheno$nitrogen %in% c("HN"))) 
 
-psn_s_hn <- ggplot(sinfo_pheno[id_02_hn,], aes(x=sinfo_pheno$asv_000143[id_02_hn], y=sinfo_pheno$vari[id_02_hn], color=sinfo_pheno$date[id_02_hn])) + 
+psn_s_hn <- ggplot(sinfo_pheno[id_02_hn,], aes(x=sinfo_pheno$asv_000092[id_02_hn], y=sinfo_pheno$vari[id_02_hn], color=sinfo_pheno$date[id_02_hn])) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -566,14 +422,10 @@ psn_s_hn <- ggplot(sinfo_pheno[id_02_hn,], aes(x=sinfo_pheno$asv_000143[id_02_hn
 psn_s_hn
 psn_s_hn + scale_color_brewer(palette="Paired") 
 
-pdf("largedata/cor_vis_dates_asv_hn_color.pdf", width = 8, height= 5)
-psn_s_hn 
-dev.off()
 
+id_02_ln = which( (sinfo_pheno$nitrogen %in% c("LN"))) 
 
-id_02_ln = which((as.character(sinfo_pheno$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno$nitrogen %in% c("LN"))) 
-
-psn_s_ln <- ggplot(sinfo_pheno[id_02_ln,], aes(x=sinfo_pheno$asv_000143[id_02_ln], y=sinfo_pheno$vari[id_02_ln], color=sinfo_pheno$date[id_02_ln])) + 
+psn_s_ln <- ggplot(sinfo_pheno[id_02_ln,], aes(x=sinfo_pheno$asv_000092[id_02_ln], y=sinfo_pheno$vari[id_02_ln], color=sinfo_pheno$date[id_02_ln])) + 
     geom_point()+
     geom_smooth(method=lm) +
     xlab("") +
@@ -595,58 +447,77 @@ psn_s_ln
 
 figure2 <- ggarrange( psn_s_hn,psn_s_ln, ncol = 1, nrow = 2)
 figure2
-figure = ggarrange(psn, figure2, ncol = 2, nrow = 1)
 
-pdf("largedata/asv_N_and_cor_vis_dates_asv.pdf", width = 10, height= 6)
+
+
+
+id_02_hn = which((sinfo_pheno$nitrogen %in% c("HN"))) 
+
+psn_s_hn <- ggplot(sinfo_pheno[id_02_hn,], aes(x=sinfo_pheno$asv_000524[id_02_hn], y=sinfo_pheno$vari[id_02_hn], color=sinfo_pheno$date[id_02_hn])) + 
+  geom_point()+
+  geom_smooth(method=lm) +
+  xlab("") +
+  ylab("") +
+  ggtitle("") +
+  theme_classic() +
+  labs(fill = "") +
+  #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+  theme(plot.title = element_text(size=20, face = "bold"), 
+        axis.text=element_text(size=16, face="bold"),
+        strip.text.x = element_text(size = 16, face = "bold"),
+        axis.title=element_text(size=fsize, face="bold"),
+        #axis.text.x = element_text(angle = 15, hjust=0.8),
+        #legend.position = c(0.2, 0.8), 
+        legend.position = "none",
+        legend.title = element_text(size=fsize, face="bold"),
+        legend.text = element_text(size=fsize))
+psn_s_hn
+
+id_02_ln = which( (sinfo_pheno$nitrogen %in% c("LN"))) 
+
+psn_s_ln <- ggplot(sinfo_pheno[id_02_ln,], aes(x=sinfo_pheno$asv_000524[id_02_ln], y=sinfo_pheno$vari[id_02_ln], color=sinfo_pheno$date[id_02_ln])) + 
+  geom_point()+
+  geom_smooth(method=lm) +
+  xlab("") +
+  ylab("") +
+  ggtitle("") +
+  theme_classic() +
+  labs(fill = "") +
+  #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
+  theme(plot.title = element_text(size=20, face = "bold"), 
+        axis.text=element_text(size=16, face="bold"),
+        strip.text.x = element_text(size = 16, face = "bold"),
+        axis.title=element_text(size=fsize, face="bold"),
+        #axis.text.x = element_text(angle = 15, hjust=0.8),
+        #legend.position = c(0.2, 0.8), 
+        legend.position = "none",
+        legend.title = element_text(size=fsize, face="bold"),
+        legend.text = element_text(size=fsize))
+psn_s_ln
+
+id_02_hn = which( (sinfo_pheno_asv$nitrogen %in% c("HN")))
+
+cor.test(sinfo_pheno_asv$asv_000524[id_02_hn], sinfo_pheno_asv$Aug12[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000524[id_02_hn], sinfo_pheno_asv$Aug22[id_02_hn], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000524[id_02_hn], sinfo_pheno_asv$Sept5[id_02_hn], method = "spearman")
+
+
+id_02_ln = which( (sinfo_pheno_asv$nitrogen %in% c("LN")))
+
+cor.test(sinfo_pheno_asv$asv_000524[id_02_ln], sinfo_pheno_asv$Aug12[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000524[id_02_ln], sinfo_pheno_asv$Aug22[id_02_ln], method = "spearman")
+cor.test(sinfo_pheno_asv$asv_000524[id_02_ln], sinfo_pheno_asv$Sept5[id_02_ln], method = "spearman")
+
+
+
+figure3 <- ggarrange( psn_s_hn,psn_s_ln, ncol = 1, nrow = 2)
+figure3
+
+
+figure = ggarrange( figure2, figure3, ncol = 2, nrow = 1)
+
+pdf("largedata/review/figures/cor_vis_dates_asv.pdf", width = 10, height= 6)
 figure
 dev.off()
 
 ```
-
-#hcc
-#The master FPM file
-```{r}
-# /common/jyanglab/shared/dbcenter/Kremling_Nature3RNASeq282_March2018/Expression_matrix/df_STAR_HTSeq_counts_B73_match_based_on_genet_dist_DESeq2_normed_fpm_rounded_origNames_and_Altnames.txt
-library("data.table")
-rna <- fread("/common/jyanglab/shared/dbcenter/Kremling_Nature3RNASeq282_March2018/Expression_matrix/df_STAR_HTSeq_counts_B73_match_based_on_genet_dist_DESeq2_normed_fpm_rounded_origNames_and_Altnames.txt", header=TRUE, data.table=FALSE)
-# 1960 37136
-
-### select the top 4 with Freq >2
-
-myr <- rna[, c(1:9, which(names(rna) == "GRMZM2G124434"))]
-
-write.table(myr, "largedata/gme1.txt", sep="\t", row.names = FALSE, quote=FALSE)
-```
-
-#on local
-```{r}
-id_02 = which((as.character(sinfo_pheno_asv_isnp$`1-240925424`) %in% c("0", "2")) & (sinfo_pheno_asv_isnp$nitrogen %in% c("HN","LN"))) 
-geno_snp =  sinfo_pheno_asv_isnp[id_02, which(colnames(sinfo_pheno_asv_isnp) %in%  c("genotype","1-240925424"))]
-geno_snp = geno_snp[!duplicated(geno_snp$genotype),]
-myr = fread("largedata/gme1.txt",header = T, data.table = F)
-
-gme1 = merge(myr[,c(2,3,7,10)], geno_snp , by.x = "RawPhenotypeNames", by.y = "genotype")
-gme1$`1-240925424` = as.character(gme1$`1-240925424`)
-
-p_gme1 <- ggplot(gme1, aes(x=TissueWODate, y=GRMZM2G124434, fill=`1-240925424`)) + 
-  geom_violin(trim=FALSE) +
-  stat_compare_means(aes(group = `1-240925424`), label = "p.signif", method = "wilcox.test") +
-    xlab("") +
-    ylab("") +
-    ggtitle("") +
-    theme_classic() +
-    labs(fill = "") +
-    #scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
-    theme(plot.title = element_text(size=20, face = "bold"), 
-          axis.text=element_text(size=16, face="bold"),
-          strip.text.x = element_text(size = 16, face = "bold"),
-          axis.title=element_text(size=fsize, face="bold"),
-          axis.text.x = element_text(angle = 15, hjust=0.8),
-          #legend.position = c(0.2, 0.8), 
-          legend.position = "bottom",
-          legend.title = element_text(size=fsize, face="bold"),
-          legend.text = element_text(size=fsize))
-p_gme1
-
-```
-
