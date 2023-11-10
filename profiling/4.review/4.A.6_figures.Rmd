@@ -1229,6 +1229,13 @@ p_Selection_coeff_HN = ggboxplot(date_asv_mic_group_top1_anno_HN, x = "date", y 
 
 p_Selection_coeff_HN
 
+wilcox.test(date_asv_mic_group_top1_anno_HN$Selection_coeff[which((date_asv_mic_group_top1_anno_HN$top1p == 0) & (date_asv_mic_group_top1_anno_HN$date == "Aug-12"))], date_asv_mic_group_top1_anno_HN$Selection_coeff[which((!(date_asv_mic_group_top1_anno_HN$top1p == 0)) & (date_asv_mic_group_top1_anno_HN$date == "Aug-12"))])
+
+wilcox.test(date_asv_mic_group_top1_anno_HN$Selection_coeff[which((date_asv_mic_group_top1_anno_HN$top1p == 0) & (date_asv_mic_group_top1_anno_HN$date == "Aug-22"))], date_asv_mic_group_top1_anno_HN$Selection_coeff[which((!(date_asv_mic_group_top1_anno_HN$top1p == 0)) & (date_asv_mic_group_top1_anno_HN$date == "Aug-22"))])
+
+wilcox.test(date_asv_mic_group_top1_anno_HN$Selection_coeff[which((date_asv_mic_group_top1_anno_HN$top1p == 0) & (date_asv_mic_group_top1_anno_HN$date == "Sep-5"))], date_asv_mic_group_top1_anno_HN$Selection_coeff[which((!(date_asv_mic_group_top1_anno_HN$top1p == 0)) & (date_asv_mic_group_top1_anno_HN$date == "Sep-5"))])
+
+
 p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y = "Selection_coeff", color = "iftop1p", palette = "jco",add = "jitter") +
     stat_compare_means(aes(group = iftop1p), label = "p.signif", paired = F, method = "wilcox.test")+
     xlab("") +
@@ -1246,6 +1253,13 @@ p_Selection_coeff_LN = ggboxplot(date_asv_mic_group_top1_anno_LN, x = "date", y 
           legend.text = element_text(size=fsize))
 
 p_Selection_coeff_LN
+
+wilcox.test(date_asv_mic_group_top1_anno_LN$Selection_coeff[which((date_asv_mic_group_top1_anno_LN$top1p == 0) & (date_asv_mic_group_top1_anno_LN$date == "Aug-12"))], date_asv_mic_group_top1_anno_LN$Selection_coeff[which((!(date_asv_mic_group_top1_anno_LN$top1p == 0)) & (date_asv_mic_group_top1_anno_LN$date == "Aug-12"))])
+
+wilcox.test(date_asv_mic_group_top1_anno_LN$Selection_coeff[which((date_asv_mic_group_top1_anno_LN$top1p == 0) & (date_asv_mic_group_top1_anno_LN$date == "Aug-22"))], date_asv_mic_group_top1_anno_LN$Selection_coeff[which((!(date_asv_mic_group_top1_anno_LN$top1p == 0)) & (date_asv_mic_group_top1_anno_LN$date == "Aug-22"))])
+
+wilcox.test(date_asv_mic_group_top1_anno_LN$Selection_coeff[which((date_asv_mic_group_top1_anno_LN$top1p == 0) & (date_asv_mic_group_top1_anno_LN$date == "Sep-5"))], date_asv_mic_group_top1_anno_LN$Selection_coeff[which((!(date_asv_mic_group_top1_anno_LN$top1p == 0)) & (date_asv_mic_group_top1_anno_LN$date == "Sep-5"))])
+
 
 library(ggpubr)
 p_anno <- ggarrange(p_h2_HN, p_h2_LN, p_Selection_coeff_HN, p_Selection_coeff_LN, ncol = 2, nrow = 2)
